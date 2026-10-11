@@ -4,12 +4,12 @@ canvas.width = 400;
 canvas.height = 600;
 
 // Oyun değişkenleri
-let bird, pipes, coins, score, coinCount, gameRunning, gravity, jumpForce;
+let bird, pipes, coins, score, coinCount, gameRunning, gravity, jumpForce, frameCount;
 
-// Karakterler
+// Renkler
 const BIRD_COLOR = '#ffcc00';
-const PIPE_COLOR = '#ff00ff'; // Zed'in likidite dronları (mor)
-const COIN_COLOR = '#00ffff'; // Zakardiya Coin
+const PIPE_COLOR = '#ff00ff';
+const COIN_COLOR = '#00ffff';
 
 function init() {
     bird = {
@@ -27,8 +27,7 @@ function init() {
     gravity = 0.5;
     jumpForce = -8;
     gameRunning = false;
-    document.getElementById('start-screen').classList.remove('hidden');
-    document.getElementById('game-over-screen').classList.add('hidden');
+    frameCount = 0;
 }
 
 function startGame() {
@@ -42,13 +41,14 @@ function startGame() {
 
 function gameLoop() {
     if (!gameRunning) return;
-    
     update();
     draw();
     requestAnimationFrame(gameLoop);
 }
 
 function update() {
+    frameCount++;
+    
     // Kuş fiziği
     bird.velocity += gravity;
     bird.y += bird.velocity;
@@ -58,19 +58,16 @@ function update() {
     for (let i = pipes.length - 1; i >= 0; i--) {
         pipes[i].x -= 3;
         
-        // Çarpışma kontrolü
         if (checkCollision(bird, pipes[i])) {
             gameOver();
             return;
         }
         
-        // Boru geçildi mi?
         if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
             pipes[i].passed = true;
             score++;
         }
         
-        // Ekrandan çıkan boruları sil
         if (pipes[i].x + pipes[i].width < 0) {
             pipes.splice(i, 1);
         }
@@ -81,7 +78,6 @@ function update() {
         coins[i].x -= 3;
         coins[i].rotation += 0.1;
         
-        // Coin toplama kontrolü
         if (checkCollision(bird, coins[i])) {
             coinCount++;
             coins.splice(i, 1);
@@ -100,25 +96,21 @@ function update() {
 }
 
 function checkCollision(bird, pipe) {
-    // Kuşun sınırları
     const birdLeft = bird.x;
     const birdRight = bird.x + bird.width;
     const birdTop = bird.y;
     const birdBottom = bird.y + bird.height;
     
-    // Borunun sınırları
     const pipeLeft = pipe.x;
     const pipeRight = pipe.x + pipe.width;
     const pipeTop = pipe.y;
     const pipeBottom = pipe.y + pipe.height;
     
-    // Çarpışma var mı?
     if (birdRight > pipeLeft && birdLeft < pipeRight && 
         birdBottom > pipeTop && birdTop < pipeBottom) {
         return true;
     }
     
-    // Coin için özel kontrol (daire)
     if (pipe.radius) {
         const dx = bird.x + bird.width/2 - pipe.x;
         const dy = bird.y + bird.height/2 - pipe.y;
@@ -130,7 +122,7 @@ function checkCollision(bird, pipe) {
 }
 
 function draw() {
-    // Arka plan (Zakardiya gökyüzü)
+    // Arka plan
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#1a1a2e');
     gradient.addColorStop(1, '#16213e');
@@ -145,17 +137,13 @@ function draw() {
         ctx.fillRect(x, y, 2, 2);
     }
 
-    // Boruları çiz (Zed'in likidite dronları)
+    // Boruları çiz
     pipes.forEach(pipe => {
         ctx.fillStyle = PIPE_COLOR;
         ctx.shadowBlur = 15;
         ctx.shadowColor = PIPE_COLOR;
-        
-        // Üst boru
         ctx.fillRect(pipe.x, 0, pipe.width, pipe.gapY);
-        // Alt boru
         ctx.fillRect(pipe.x, pipe.gapY + pipe.gap, pipe.width, canvas.height - pipe.gapY - pipe.gap);
-        
         ctx.shadowBlur = 0;
     });
 
@@ -164,43 +152,34 @@ function draw() {
         ctx.save();
         ctx.translate(coin.x, coin.y);
         ctx.rotate(coin.rotation);
-        
         ctx.fillStyle = COIN_COLOR;
         ctx.shadowBlur = 20;
         ctx.shadowColor = COIN_COLOR;
         ctx.beginPath();
         ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Coin sembolü
         ctx.fillStyle = '#000';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Z', 0, 0);
-        
         ctx.restore();
     });
 
-    // Kuşu çiz (Küçük Yatırımcı)
+    // Kuşu çiz
     ctx.save();
     ctx.translate(bird.x + bird.width/2, bird.y + bird.height/2);
     ctx.rotate(bird.rotation);
-    
     ctx.fillStyle = BIRD_COLOR;
     ctx.shadowBlur = 15;
     ctx.shadowColor = BIRD_COLOR;
     ctx.beginPath();
     ctx.arc(0, 0, bird.width/2, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Göz
     ctx.fillStyle = '#000';
     ctx.beginPath();
     ctx.arc(5, -5, 3, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Gaga
     ctx.fillStyle = '#ff6600';
     ctx.beginPath();
     ctx.moveTo(15, 0);
@@ -208,7 +187,6 @@ function draw() {
     ctx.lineTo(25, 5);
     ctx.closePath();
     ctx.fill();
-    
     ctx.restore();
 
     // Skor
@@ -216,8 +194,6 @@ function draw() {
     ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'left';
     ctx.fillText('Skor: ' + score, 20, 40);
-    
-    // Coin sayısı
     ctx.fillStyle = COIN_COLOR;
     ctx.fillText('ZKD: ' + coinCount, 20, 70);
 }
@@ -228,7 +204,6 @@ function spawnPipes() {
     const gap = 150;
     const gapY = Math.random() * (canvas.height - gap - 100) + 50;
     
-    // Zed'in dronu (boru)
     pipes.push({
         x: canvas.width,
         width: 60,
@@ -237,7 +212,6 @@ function spawnPipes() {
         passed: false
     });
     
-    // Coin'leri rastgele yerleştir
     if (Math.random() > 0.3) {
         coins.push({
             x: canvas.width + 100,
@@ -259,8 +233,11 @@ function gameOver() {
 
 // Kontroller
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && gameRunning) {
-        bird.velocity = jumpForce;
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (gameRunning) {
+            bird.velocity = jumpForce;
+        }
     }
 });
 
