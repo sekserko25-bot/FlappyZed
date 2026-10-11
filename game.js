@@ -4,21 +4,22 @@ canvas.width = 400;
 canvas.height = 600;
 
 // ============ OYUN DEĞİŞKENLERİ ============
-let bird, pipes, coins, score, coinCount, gameRunning, gravity, jumpForce;
-let spawnTimer, lastSpawnTime;
+let bird, pipes, coins, score, coinCount, gameRunning;
+let lastSpawnTime;
 
 // Renkler
 const BIRD_COLOR = '#ffcc00';
 const PIPE_COLOR = '#ff00ff';
 const COIN_COLOR = '#00ffff';
 
-// ============ FİZİK AYARLARI (Orijinal Flappy Bird'e Yakın) ============
-const GRAVITY = 0.45;
-const JUMP_FORCE = -8.5;
-const PIPE_SPEED = 3;
-const PIPE_GAP = 160;        // Borular arası boşluk
+// ============ FİZİK AYARLARI (Düzeltilmiş) ============
+const GRAVITY = 0.4;              // Yerçekimi (düşük = yavaş düşer)
+const JUMP_FORCE = -9.5;          // Zıplama gücü (yüksek = yükseğe zıplar)
+const MAX_FALL_SPEED = 11;        // Maksimum düşüş hızı
+const PIPE_SPEED = 2.5;           // Boru hızı (yavaşlatıldı)
+const PIPE_GAP = 160;             // Borular arası boşluk
 const PIPE_WIDTH = 60;
-const PIPE_SPAWN_INTERVAL = 1500; // ms
+const PIPE_SPAWN_INTERVAL = 1600; // ms
 const BIRD_WIDTH = 34;
 const BIRD_HEIGHT = 26;
 
@@ -38,34 +39,31 @@ function init() {
     coinCount = 0;
     gameRunning = false;
     lastSpawnTime = 0;
-    spawnTimer = null;
 }
 
 // ============ OYUNU BAŞLAT ============
 function startGame() {
     init();
-    // Kuşu ortada sabitle ve hızını sıfırla
     bird.y = canvas.height / 2 - BIRD_HEIGHT / 2;
     bird.velocity = 0;
     bird.rotation = 0;
     gameRunning = true;
-    
+
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('game-over-screen').classList.add('hidden');
-    
+
     lastSpawnTime = performance.now();
-    gameLoop();
+    requestAnimationFrame(gameLoop);
 }
 
 // ============ OYUN DÖNGÜSÜ ============
 function gameLoop(timestamp) {
     if (!gameRunning) return;
-    
     if (!timestamp) timestamp = performance.now();
-    
+
     update(timestamp);
     draw();
-    
+
     if (gameRunning) {
         requestAnimationFrame(gameLoop);
     }
@@ -75,8 +73,14 @@ function gameLoop(timestamp) {
 function update(timestamp) {
     // Kuş fiziği
     bird.velocity += GRAVITY;
-    bird.y += bird.velocity;
     
+    // Maksimum düşüş hızını sınırla
+    if (bird.velocity > MAX_FALL_SPEED) {
+        bird.velocity = MAX_FALL_SPEED;
+    }
+    
+    bird.y += bird.velocity;
+
     // Kuşun dönüş açısı (hıza göre)
     let targetRotation = Math.min(Math.max(bird.velocity * 0.08, -0.6), 1.2);
     bird.rotation += (targetRotation - bird.rotation) * 0.15;
@@ -84,20 +88,17 @@ function update(timestamp) {
     // Boruları güncelle
     for (let i = pipes.length - 1; i >= 0; i--) {
         pipes[i].x -= PIPE_SPEED;
-        
-        // Çarpışma kontrolü
+
         if (checkCollision(bird, pipes[i])) {
             gameOver();
             return;
         }
-        
-        // Boru geçildi mi?
+
         if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
             pipes[i].passed = true;
             score++;
         }
-        
-        // Ekrandan çıkan boruları sil
+
         if (pipes[i].x + pipes[i].width < 0) {
             pipes.splice(i, 1);
         }
@@ -107,14 +108,13 @@ function update(timestamp) {
     for (let i = coins.length - 1; i >= 0; i--) {
         coins[i].x -= PIPE_SPEED;
         coins[i].rotation += 0.08;
-        
-        // Coin toplama
+
         if (checkCoinCollision(bird, coins[i])) {
             coinCount++;
             coins.splice(i, 1);
             continue;
         }
-        
+
         if (coins[i].x + coins[i].radius < 0) {
             coins.splice(i, 1);
         }
@@ -126,7 +126,7 @@ function update(timestamp) {
         gameOver();
         return;
     }
-    
+
     // Tavan kontrolü
     if (bird.y < 0) {
         bird.y = 0;
@@ -140,38 +140,38 @@ function update(timestamp) {
     }
 }
 
-// ============ BORU ÇARPIŞMA KONTROLÜ (Ayrı üst ve alt) ============
+// ============ BORU ÇARPIŞMA KONTROLÜ ============
 function checkCollision(bird, pipe) {
-    const birdLeft = bird.x + 4;          // Kuşun kenar boşluğu (daha adil çarpışma)
+    const birdLeft = bird.x + 4;
     const birdRight = bird.x + bird.width - 4;
     const birdTop = bird.y + 4;
     const birdBottom = bird.y + bird.height - 4;
-    
+
     const pipeLeft = pipe.x;
     const pipeRight = pipe.x + pipe.width;
-    
+
     // ÜST BORU
     const topPipeTop = 0;
     const topPipeBottom = pipe.gapY;
-    
+
     if (birdRight > pipeLeft && birdLeft < pipeRight &&
         birdBottom > topPipeTop && birdTop < topPipeBottom) {
         return true;
     }
-    
+
     // ALT BORU
     const bottomPipeTop = pipe.gapY + pipe.gap;
     const bottomPipeBottom = canvas.height;
-    
+
     if (birdRight > pipeLeft && birdLeft < pipeRight &&
         birdBottom > bottomPipeTop && birdTop < bottomPipeBottom) {
         return true;
     }
-    
+
     return false;
 }
 
-// ============ COIN ÇARPIŞMA KONTROLÜ (Daire) ============
+// ============ COIN ÇARPIŞMA KONTROLÜ ============
 function checkCoinCollision(bird, coin) {
     const birdCenterX = bird.x + bird.width / 2;
     const birdCenterY = bird.y + bird.height / 2;
@@ -183,14 +183,14 @@ function checkCoinCollision(bird, coin) {
 
 // ============ ÇİZİM ============
 function draw() {
-    // Arka plan (Zakardiya gökyüzü)
+    // Arka plan
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#1a1a2e');
     gradient.addColorStop(1, '#16213e');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Yıldızlar (sabit, parallax yok)
+
+    // Yıldızlar
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     for (let i = 0; i < 60; i++) {
         const x = (i * 71) % canvas.width;
@@ -198,58 +198,54 @@ function draw() {
         ctx.fillRect(x, y, 2, 2);
     }
 
-    // Boruları çiz (Zed'in likidite dronları)
+    // Borular
     pipes.forEach(pipe => {
         ctx.save();
         ctx.shadowBlur = 15;
         ctx.shadowColor = PIPE_COLOR;
         ctx.fillStyle = PIPE_COLOR;
-        
-        // Üst boru
+
         ctx.fillRect(pipe.x, 0, pipe.width, pipe.gapY);
-        
-        // Alt boru
+
         const bottomY = pipe.gapY + pipe.gap;
         const bottomHeight = canvas.height - bottomY;
         ctx.fillRect(pipe.x, bottomY, pipe.width, bottomHeight);
-        
-        // Boru kenar çizgileri (görsel derinlik)
+
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fillRect(pipe.x, 0, 4, pipe.gapY);
         ctx.fillRect(pipe.x, bottomY, 4, bottomHeight);
-        
+
         ctx.restore();
     });
 
-    // Coin'leri çiz
+    // Coin'ler
     coins.forEach(coin => {
         ctx.save();
         ctx.translate(coin.x, coin.y);
         ctx.rotate(coin.rotation);
-        
+
         ctx.fillStyle = COIN_COLOR;
         ctx.shadowBlur = 20;
         ctx.shadowColor = COIN_COLOR;
         ctx.beginPath();
         ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Coin sembolü
+
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#000';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Z', 0, 0);
-        
+
         ctx.restore();
     });
 
-    // Kuşu çiz (Küçük Yatırımcı)
+    // Kuş
     ctx.save();
     ctx.translate(bird.x + bird.width / 2, bird.y + bird.height / 2);
     ctx.rotate(bird.rotation);
-    
+
     // Gövde
     ctx.fillStyle = BIRD_COLOR;
     ctx.shadowBlur = 15;
@@ -257,20 +253,20 @@ function draw() {
     ctx.beginPath();
     ctx.ellipse(0, 0, bird.width / 2, bird.height / 2, 0, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Göz (beyaz)
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.arc(6, -5, 5, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Göz bebeği
     ctx.fillStyle = '#000';
     ctx.beginPath();
     ctx.arc(7, -5, 2.5, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Gaga
     ctx.fillStyle = '#ff6600';
     ctx.beginPath();
@@ -279,13 +275,13 @@ function draw() {
     ctx.lineTo(24, 4);
     ctx.closePath();
     ctx.fill();
-    
+
     // Kanat
     ctx.fillStyle = '#e6a800';
     ctx.beginPath();
     ctx.ellipse(-4, 2, 8, 5, 0.3, 0, Math.PI * 2);
     ctx.fill();
-    
+
     ctx.restore();
 
     // Skor
@@ -295,7 +291,7 @@ function draw() {
     ctx.shadowBlur = 10;
     ctx.shadowColor = '#000';
     ctx.fillText('Skor: ' + score, 20, 45);
-    
+
     // Coin sayısı
     ctx.fillStyle = COIN_COLOR;
     ctx.font = 'bold 22px Arial';
@@ -305,11 +301,10 @@ function draw() {
 
 // ============ BORU OLUŞTUR ============
 function spawnPipe() {
-    // Boşluğun merkezi rastgele, ama kenarlardan uzak
     const minGapY = 80;
     const maxGapY = canvas.height - PIPE_GAP - 80;
     const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
-    
+
     pipes.push({
         x: canvas.width,
         width: PIPE_WIDTH,
@@ -317,8 +312,7 @@ function spawnPipe() {
         gap: PIPE_GAP,
         passed: false
     });
-    
-    // Rastgele coin yerleştir (boşluğun ortasına)
+
     if (Math.random() > 0.4) {
         coins.push({
             x: canvas.width + PIPE_WIDTH / 2,
