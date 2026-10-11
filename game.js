@@ -3,20 +3,32 @@ const ctx = canvas.getContext('2d');
 canvas.width = 400;
 canvas.height = 600;
 
-// Oyun değişkenleri
-let bird, pipes, coins, score, coinCount, gameRunning, gravity, jumpForce, frameCount;
+// ============ OYUN DEĞİŞKENLERİ ============
+let bird, pipes, coins, score, coinCount, gameRunning, gravity, jumpForce;
+let spawnTimer, lastSpawnTime;
 
 // Renkler
 const BIRD_COLOR = '#ffcc00';
 const PIPE_COLOR = '#ff00ff';
 const COIN_COLOR = '#00ffff';
 
+// ============ FİZİK AYARLARI (Orijinal Flappy Bird'e Yakın) ============
+const GRAVITY = 0.45;
+const JUMP_FORCE = -8.5;
+const PIPE_SPEED = 3;
+const PIPE_GAP = 160;        // Borular arası boşluk
+const PIPE_WIDTH = 60;
+const PIPE_SPAWN_INTERVAL = 1500; // ms
+const BIRD_WIDTH = 34;
+const BIRD_HEIGHT = 26;
+
+// ============ BAŞLATMA ============
 function init() {
     bird = {
         x: 80,
-        y: 300,
-        width: 30,
-        height: 30,
+        y: canvas.height / 2 - BIRD_HEIGHT / 2,
+        width: BIRD_WIDTH,
+        height: BIRD_HEIGHT,
         velocity: 0,
         rotation: 0
     };
@@ -24,50 +36,68 @@ function init() {
     coins = [];
     score = 0;
     coinCount = 0;
-    gravity = 0.5;
-    jumpForce = -8;
     gameRunning = false;
-    frameCount = 0;
+    lastSpawnTime = 0;
+    spawnTimer = null;
 }
 
+// ============ OYUNU BAŞLAT ============
 function startGame() {
     init();
+    // Kuşu ortada sabitle ve hızını sıfırla
+    bird.y = canvas.height / 2 - BIRD_HEIGHT / 2;
+    bird.velocity = 0;
+    bird.rotation = 0;
     gameRunning = true;
+    
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('game-over-screen').classList.add('hidden');
-    gameLoop();
-    spawnPipes();
-}
-
-function gameLoop() {
-    if (!gameRunning) return;
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-function update() {
-    frameCount++;
     
+    lastSpawnTime = performance.now();
+    gameLoop();
+}
+
+// ============ OYUN DÖNGÜSÜ ============
+function gameLoop(timestamp) {
+    if (!gameRunning) return;
+    
+    if (!timestamp) timestamp = performance.now();
+    
+    update(timestamp);
+    draw();
+    
+    if (gameRunning) {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// ============ GÜNCELLEME ============
+function update(timestamp) {
     // Kuş fiziği
-    bird.velocity += gravity;
+    bird.velocity += GRAVITY;
     bird.y += bird.velocity;
-    bird.rotation = Math.min(Math.max(bird.velocity * 0.05, -0.5), 0.5);
+    
+    // Kuşun dönüş açısı (hıza göre)
+    let targetRotation = Math.min(Math.max(bird.velocity * 0.08, -0.6), 1.2);
+    bird.rotation += (targetRotation - bird.rotation) * 0.15;
 
     // Boruları güncelle
     for (let i = pipes.length - 1; i >= 0; i--) {
-        pipes[i].x -= 3;
+        pipes[i].x -= PIPE_SPEED;
         
+        // Çarpışma kontrolü
         if (checkCollision(bird, pipes[i])) {
             gameOver();
             return;
         }
         
+        // Boru geçildi mi?
         if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
             pipes[i].passed = true;
             score++;
         }
         
+        // Ekrandan çıkan boruları sil
         if (pipes[i].x + pipes[i].width < 0) {
             pipes.splice(i, 1);
         }
@@ -75,10 +105,11 @@ function update() {
 
     // Coin'leri güncelle
     for (let i = coins.length - 1; i >= 0; i--) {
-        coins[i].x -= 3;
-        coins[i].rotation += 0.1;
+        coins[i].x -= PIPE_SPEED;
+        coins[i].rotation += 0.08;
         
-        if (checkCollision(bird, coins[i])) {
+        // Coin toplama
+        if (checkCoinCollision(bird, coins[i])) {
             coinCount++;
             coins.splice(i, 1);
             continue;
@@ -89,62 +120,105 @@ function update() {
         }
     }
 
-    // Zemin ve tavan kontrolü
-    if (bird.y + bird.height > canvas.height || bird.y < 0) {
+    // Zemin kontrolü
+    if (bird.y + bird.height >= canvas.height) {
+        bird.y = canvas.height - bird.height;
         gameOver();
+        return;
+    }
+    
+    // Tavan kontrolü
+    if (bird.y < 0) {
+        bird.y = 0;
+        bird.velocity = 0;
+    }
+
+    // Yeni boru oluştur
+    if (timestamp - lastSpawnTime > PIPE_SPAWN_INTERVAL) {
+        spawnPipe();
+        lastSpawnTime = timestamp;
     }
 }
 
+// ============ BORU ÇARPIŞMA KONTROLÜ (Ayrı üst ve alt) ============
 function checkCollision(bird, pipe) {
-    const birdLeft = bird.x;
-    const birdRight = bird.x + bird.width;
-    const birdTop = bird.y;
-    const birdBottom = bird.y + bird.height;
+    const birdLeft = bird.x + 4;          // Kuşun kenar boşluğu (daha adil çarpışma)
+    const birdRight = bird.x + bird.width - 4;
+    const birdTop = bird.y + 4;
+    const birdBottom = bird.y + bird.height - 4;
     
     const pipeLeft = pipe.x;
     const pipeRight = pipe.x + pipe.width;
-    const pipeTop = pipe.y;
-    const pipeBottom = pipe.y + pipe.height;
     
-    if (birdRight > pipeLeft && birdLeft < pipeRight && 
-        birdBottom > pipeTop && birdTop < pipeBottom) {
+    // ÜST BORU
+    const topPipeTop = 0;
+    const topPipeBottom = pipe.gapY;
+    
+    if (birdRight > pipeLeft && birdLeft < pipeRight &&
+        birdBottom > topPipeTop && birdTop < topPipeBottom) {
         return true;
     }
     
-    if (pipe.radius) {
-        const dx = bird.x + bird.width/2 - pipe.x;
-        const dy = bird.y + bird.height/2 - pipe.y;
-        const distance = Math.sqrt(dx*dx + dy*dy);
-        return distance < bird.width/2 + pipe.radius;
+    // ALT BORU
+    const bottomPipeTop = pipe.gapY + pipe.gap;
+    const bottomPipeBottom = canvas.height;
+    
+    if (birdRight > pipeLeft && birdLeft < pipeRight &&
+        birdBottom > bottomPipeTop && birdTop < bottomPipeBottom) {
+        return true;
     }
     
     return false;
 }
 
+// ============ COIN ÇARPIŞMA KONTROLÜ (Daire) ============
+function checkCoinCollision(bird, coin) {
+    const birdCenterX = bird.x + bird.width / 2;
+    const birdCenterY = bird.y + bird.height / 2;
+    const dx = birdCenterX - coin.x;
+    const dy = birdCenterY - coin.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < (bird.width / 2) + coin.radius;
+}
+
+// ============ ÇİZİM ============
 function draw() {
-    // Arka plan
+    // Arka plan (Zakardiya gökyüzü)
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#1a1a2e');
     gradient.addColorStop(1, '#16213e');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Yıldızlar
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 50; i++) {
-        const x = (i * 37) % canvas.width;
-        const y = (i * 53) % canvas.height;
+    // Yıldızlar (sabit, parallax yok)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    for (let i = 0; i < 60; i++) {
+        const x = (i * 71) % canvas.width;
+        const y = (i * 43) % canvas.height;
         ctx.fillRect(x, y, 2, 2);
     }
 
-    // Boruları çiz
+    // Boruları çiz (Zed'in likidite dronları)
     pipes.forEach(pipe => {
-        ctx.fillStyle = PIPE_COLOR;
+        ctx.save();
         ctx.shadowBlur = 15;
         ctx.shadowColor = PIPE_COLOR;
+        ctx.fillStyle = PIPE_COLOR;
+        
+        // Üst boru
         ctx.fillRect(pipe.x, 0, pipe.width, pipe.gapY);
-        ctx.fillRect(pipe.x, pipe.gapY + pipe.gap, pipe.width, canvas.height - pipe.gapY - pipe.gap);
-        ctx.shadowBlur = 0;
+        
+        // Alt boru
+        const bottomY = pipe.gapY + pipe.gap;
+        const bottomHeight = canvas.height - bottomY;
+        ctx.fillRect(pipe.x, bottomY, pipe.width, bottomHeight);
+        
+        // Boru kenar çizgileri (görsel derinlik)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(pipe.x, 0, 4, pipe.gapY);
+        ctx.fillRect(pipe.x, bottomY, 4, bottomHeight);
+        
+        ctx.restore();
     });
 
     // Coin'leri çiz
@@ -152,78 +226,110 @@ function draw() {
         ctx.save();
         ctx.translate(coin.x, coin.y);
         ctx.rotate(coin.rotation);
+        
         ctx.fillStyle = COIN_COLOR;
         ctx.shadowBlur = 20;
         ctx.shadowColor = COIN_COLOR;
         ctx.beginPath();
         ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Coin sembolü
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#000';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Z', 0, 0);
+        
         ctx.restore();
     });
 
-    // Kuşu çiz
+    // Kuşu çiz (Küçük Yatırımcı)
     ctx.save();
-    ctx.translate(bird.x + bird.width/2, bird.y + bird.height/2);
+    ctx.translate(bird.x + bird.width / 2, bird.y + bird.height / 2);
     ctx.rotate(bird.rotation);
+    
+    // Gövde
     ctx.fillStyle = BIRD_COLOR;
     ctx.shadowBlur = 15;
     ctx.shadowColor = BIRD_COLOR;
     ctx.beginPath();
-    ctx.arc(0, 0, bird.width/2, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, bird.width / 2, bird.height / 2, 0, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Göz (beyaz)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(6, -5, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Göz bebeği
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.arc(5, -5, 3, 0, Math.PI * 2);
+    ctx.arc(7, -5, 2.5, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Gaga
     ctx.fillStyle = '#ff6600';
     ctx.beginPath();
-    ctx.moveTo(15, 0);
-    ctx.lineTo(25, -5);
-    ctx.lineTo(25, 5);
+    ctx.moveTo(14, 0);
+    ctx.lineTo(24, -4);
+    ctx.lineTo(24, 4);
     ctx.closePath();
     ctx.fill();
+    
+    // Kanat
+    ctx.fillStyle = '#e6a800';
+    ctx.beginPath();
+    ctx.ellipse(-4, 2, 8, 5, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
     ctx.restore();
 
     // Skor
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 24px Arial';
+    ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('Skor: ' + score, 20, 40);
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#000';
+    ctx.fillText('Skor: ' + score, 20, 45);
+    
+    // Coin sayısı
     ctx.fillStyle = COIN_COLOR;
-    ctx.fillText('ZKD: ' + coinCount, 20, 70);
+    ctx.font = 'bold 22px Arial';
+    ctx.fillText('ZKD: ' + coinCount, 20, 75);
+    ctx.shadowBlur = 0;
 }
 
-function spawnPipes() {
-    if (!gameRunning) return;
-    
-    const gap = 150;
-    const gapY = Math.random() * (canvas.height - gap - 100) + 50;
+// ============ BORU OLUŞTUR ============
+function spawnPipe() {
+    // Boşluğun merkezi rastgele, ama kenarlardan uzak
+    const minGapY = 80;
+    const maxGapY = canvas.height - PIPE_GAP - 80;
+    const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
     
     pipes.push({
         x: canvas.width,
-        width: 60,
+        width: PIPE_WIDTH,
         gapY: gapY,
-        gap: gap,
+        gap: PIPE_GAP,
         passed: false
     });
     
-    if (Math.random() > 0.3) {
+    // Rastgele coin yerleştir (boşluğun ortasına)
+    if (Math.random() > 0.4) {
         coins.push({
-            x: canvas.width + 100,
-            y: gapY + gap / 2,
+            x: canvas.width + PIPE_WIDTH / 2,
+            y: gapY + PIPE_GAP / 2,
             radius: 12,
             rotation: 0
         });
     }
-    
-    setTimeout(spawnPipes, 1800);
 }
 
+// ============ OYUN BİTTİ ============
 function gameOver() {
     gameRunning = false;
     document.getElementById('finalScore').textContent = score;
@@ -231,31 +337,28 @@ function gameOver() {
     document.getElementById('game-over-screen').classList.remove('hidden');
 }
 
-// Kontroller
+// ============ KONTROLLER ============
+function zipla() {
+    if (gameRunning) {
+        bird.velocity = JUMP_FORCE;
+    }
+}
+
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         e.preventDefault();
-        if (gameRunning) {
-            bird.velocity = jumpForce;
-        }
+        zipla();
     }
 });
 
-canvas.addEventListener('click', () => {
-    if (gameRunning) {
-        bird.velocity = jumpForce;
-    }
-});
-
+canvas.addEventListener('click', zipla);
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    if (gameRunning) {
-        bird.velocity = jumpForce;
-    }
-});
+    zipla();
+}, { passive: false });
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('restartBtn').addEventListener('click', startGame);
 
-// Başlat
+// ============ BAŞLAT ============
 init();
