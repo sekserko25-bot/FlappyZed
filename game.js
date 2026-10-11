@@ -5,21 +5,21 @@ canvas.height = 600;
 
 // ============ OYUN DEĞİŞKENLERİ ============
 let bird, pipes, coins, score, coinCount, gameRunning;
-let lastSpawnTime;
+let lastSpawnTime, lastTimestamp;
 
 // Renkler
 const BIRD_COLOR = '#ffcc00';
 const PIPE_COLOR = '#ff00ff';
 const COIN_COLOR = '#00ffff';
 
-// ============ FİZİK AYARLARI (Düzeltilmiş) ============
-const GRAVITY = 0.4;              // Yerçekimi (düşük = yavaş düşer)
-const JUMP_FORCE = -9.5;          // Zıplama gücü (yüksek = yükseğe zıplar)
-const MAX_FALL_SPEED = 11;        // Maksimum düşüş hızı
-const PIPE_SPEED = 2.5;           // Boru hızı (yavaşlatıldı)
-const PIPE_GAP = 160;             // Borular arası boşluk
-const PIPE_WIDTH = 60;
-const PIPE_SPAWN_INTERVAL = 1600; // ms
+// ============ FİZİK AYARLARI (Orijinal Flappy Bird Değerleri) ============
+const GRAVITY = 0.45;              // Yerçekimi
+const JUMP_FORCE = -8.5;           // Zıplama gücü
+const MAX_FALL_SPEED = 10;         // Maksimum düşüş hızı
+const PIPE_SPEED = 3;              // Boru hızı
+const PIPE_GAP = 150;              // Borular arası boşluk
+const PIPE_WIDTH = 60;             // Boru genişliği
+const PIPE_SPAWN_INTERVAL = 1800;  // Boru oluşturma aralığı (ms)
 const BIRD_WIDTH = 34;
 const BIRD_HEIGHT = 26;
 
@@ -39,6 +39,7 @@ function init() {
     coinCount = 0;
     gameRunning = false;
     lastSpawnTime = 0;
+    lastTimestamp = 0;
 }
 
 // ============ OYUNU BAŞLAT ============
@@ -53,15 +54,25 @@ function startGame() {
     document.getElementById('game-over-screen').classList.add('hidden');
 
     lastSpawnTime = performance.now();
+    lastTimestamp = 0;
     requestAnimationFrame(gameLoop);
 }
 
-// ============ OYUN DÖNGÜSÜ ============
+// ============ OYUN DÖNGÜSÜ (Delta Time Destekli) ============
 function gameLoop(timestamp) {
     if (!gameRunning) return;
-    if (!timestamp) timestamp = performance.now();
 
-    update(timestamp);
+    if (!lastTimestamp) lastTimestamp = timestamp;
+
+    // Geçen süreyi hesapla (saniye cinsinden), maksimum 0.1 saniye ile sınırla
+    let deltaTime = (timestamp - lastTimestamp) / 1000;
+    if (deltaTime > 0.1) deltaTime = 0.1;
+    lastTimestamp = timestamp;
+
+    // 60 FPS'e göre normalize et
+    const dt = deltaTime * 60;
+
+    update(dt, timestamp);
     draw();
 
     if (gameRunning) {
@@ -70,24 +81,24 @@ function gameLoop(timestamp) {
 }
 
 // ============ GÜNCELLEME ============
-function update(timestamp) {
+function update(dt, timestamp) {
     // Kuş fiziği
-    bird.velocity += GRAVITY;
+    bird.velocity += GRAVITY * dt;
     
     // Maksimum düşüş hızını sınırla
     if (bird.velocity > MAX_FALL_SPEED) {
         bird.velocity = MAX_FALL_SPEED;
     }
     
-    bird.y += bird.velocity;
+    bird.y += bird.velocity * dt;
 
     // Kuşun dönüş açısı (hıza göre)
     let targetRotation = Math.min(Math.max(bird.velocity * 0.08, -0.6), 1.2);
-    bird.rotation += (targetRotation - bird.rotation) * 0.15;
+    bird.rotation += (targetRotation - bird.rotation) * 0.15 * dt;
 
     // Boruları güncelle
     for (let i = pipes.length - 1; i >= 0; i--) {
-        pipes[i].x -= PIPE_SPEED;
+        pipes[i].x -= PIPE_SPEED * dt;
 
         if (checkCollision(bird, pipes[i])) {
             gameOver();
@@ -106,8 +117,8 @@ function update(timestamp) {
 
     // Coin'leri güncelle
     for (let i = coins.length - 1; i >= 0; i--) {
-        coins[i].x -= PIPE_SPEED;
-        coins[i].rotation += 0.08;
+        coins[i].x -= PIPE_SPEED * dt;
+        coins[i].rotation += 0.08 * dt;
 
         if (checkCoinCollision(bird, coins[i])) {
             coinCount++;
