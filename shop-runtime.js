@@ -1,7 +1,7 @@
 // Persistent BUY inventory and run-based power-up use.
 const SHOP_KEY = 'zed_powerup_inventory_v1';
 const MAGNET_TIME_KEY = 'zed_magnet_time_remaining_v1';
-const MAGNET_DURATION = 15 * 60 * 1000;
+const MAGNET_DURATION = 25 * 1000;
 let shopInventory = { lives: 0, shields: 0, magnets: 0 };
 let runUsage = { lives: 0, shields: 0, magnets: 0 };
 let runMagnetActive = false;
@@ -83,7 +83,7 @@ function startPurchasedRun() {
     runUsage = { lives: 0, shields: 0, magnets: 0 };
     lives = 1 + shopInventory.lives;
 
-    // The player chooses how many 15-minute magnet charges to queue for this run.
+    // The player chooses how many 25-second magnet charges to queue for this run.
     const magnetChoice = document.getElementById('magnetUseCount');
     const requestedMagnets = Math.max(0, parseInt(magnetChoice.value, 10) || 0);
     const selectedMagnets = Math.min(requestedMagnets, shopInventory.magnets);
@@ -104,7 +104,7 @@ function startPurchasedRun() {
 function finishPurchasedRun() {
     if (!runIsActive) return;
     if (runMagnetActive && magnetActive && magnetTimer > 0) {
-        // Keep the unused part of the active 15-minute charge for the next attempt.
+        // Keep the unused part of the active 25-second charge for the next attempt.
         magnetTimeRemaining = magnetTimer;
     }
     runIsActive = false;
@@ -165,7 +165,7 @@ window.winGame = function () {
 const originalUpdate = window.update;
 window.update = function (dt, timestamp) {
     if (runMagnetActive && gameRunning && magnetTimer <= 0) {
-        // A charge is consumed only after its full 15 minutes have elapsed.
+        // A charge is consumed only after its full 25 seconds have elapsed.
         runUsage.magnets++;
         magnetTimeRemaining = 0;
         if (runMagnetChargesRemaining > 0 && runUsage.magnets < shopInventory.magnets) {
