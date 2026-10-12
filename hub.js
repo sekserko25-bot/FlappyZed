@@ -16,37 +16,22 @@ function getProgress() {
     return kayit ? parseInt(kayit) : 1;
 }
 
-function setProgress(level) {
-    localStorage.setItem('zakardiya_progress', level);
-}
-
 function getCompleted() {
     const kayit = localStorage.getItem('zakardiya_completed');
     return kayit ? JSON.parse(kayit) : [];
-}
-
-function markCompleted(gameId) {
-    const completed = getCompleted();
-    if (!completed.includes(gameId)) {
-        completed.push(gameId);
-        localStorage.setItem('zakardiya_completed', JSON.stringify(completed));
-    }
 }
 
 function renderHub() {
     const grid = document.getElementById('gamesGrid');
     const progress = getProgress();
     const completed = getCompleted();
-
     grid.innerHTML = '';
 
     GAMES.forEach(game => {
         const slot = document.createElement('div');
         slot.className = 'game-slot';
-
         const isUnlocked = game.id <= progress;
         const isCompleted = completed.includes(game.id);
-
         if (isCompleted) slot.classList.add('completed');
         else if (isUnlocked) slot.classList.add('unlocked');
         else slot.classList.add('locked');
@@ -58,21 +43,14 @@ function renderHub() {
         `;
 
         if (isUnlocked && game.url !== '#') {
-            slot.addEventListener('click', () => {
-                window.location.href = game.url;
-            });
+            slot.addEventListener('click', () => window.location.href = game.url);
         } else if (isUnlocked) {
-            slot.addEventListener('click', () => {
-                alert('This chapter is still in development! 🚧');
-            });
+            slot.addEventListener('click', () => alert('This chapter is still in development! 🚧'));
         }
-
         grid.appendChild(slot);
     });
 
-    const completedCount = completed.length;
-    document.getElementById('progress-text').textContent =
-        `Progress: ${completedCount} / 10`;
+    document.getElementById('progress-text').textContent = `Progress: ${completed.length} / 10`;
 }
 
 document.getElementById('storyBtn').addEventListener('click', () => {
@@ -84,11 +62,14 @@ document.getElementById('resetBtn').addEventListener('click', () => {
         localStorage.removeItem('zakardiya_progress');
         localStorage.removeItem('zakardiya_completed');
         localStorage.removeItem('zed_story_seen');
+        localStorage.removeItem('zed_manga_v2_seen');
         renderHub();
     }
 });
 
-if (!localStorage.getItem('zed_story_seen')) {
+// Play the new manga prologue once even for players who saw the old story.
+if (!localStorage.getItem('zed_manga_v2_seen')) {
+    localStorage.setItem('zed_manga_v2_seen', 'true');
     window.location.replace('story.html');
 } else {
     renderHub();
