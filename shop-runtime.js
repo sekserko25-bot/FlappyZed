@@ -1,12 +1,18 @@
 // Persistent BUY inventory and run-based power-up use.
 const SHOP_KEY = 'zed_powerup_inventory_v1';
+const MAGNET_TIME_KEY = 'zed_magnet_time_remaining_v1';
+const MAGNET_DURATION = 15 * 60 * 1000;
 let shopInventory = { lives: 0, shields: 0, magnets: 0 };
 let runUsage = { lives: 0, shields: 0, magnets: 0 };
 let runMagnetActive = false;
+let runMagnetChargesRemaining = 0;
+let magnetTimeRemaining = 0;
+let lastMagnetSaveAt = 0;
 let runIsActive = false;
 
 try {
     shopInventory = { ...shopInventory, ...JSON.parse(localStorage.getItem(SHOP_KEY) || '{}') };
+    magnetTimeRemaining = Math.max(0, Math.min(MAGNET_DURATION, Number(localStorage.getItem(MAGNET_TIME_KEY)) || 0));
 } catch (_) {
     localStorage.removeItem(SHOP_KEY);
 }
@@ -24,17 +30,29 @@ function renderShop() {
     document.getElementById('livesStock').textContent = shopInventory.lives;
     document.getElementById('shieldsStock').textContent = shopInventory.shields;
     document.getElementById('magnetsStock').textContent = shopInventory.magnets;
+    const magnetChoice = document.getElementById('magnetUseCount');
+    if (magnetChoice) {
+        magnetChoice.max = shopInventory.magnets;
+        magnetChoice.value = Math.min(Math.max(0, parseInt(magnetChoice.value, 10) || 0), shopInventory.magnets);
+    }
     updateShieldButton();
 }
 
 function saveShopInventory() {
-    try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopInventory)); } catch (_) {}
+    try {
+        localStorage.setItem(SHOP_KEY, JSON.stringify(shopInventory));
+        localStorage.setItem(MAGNET_TIME_KEY, String(magnetTimeRemaining));
+    } catch (_) {}
     renderShop();
 }
 
 function buyPowerup(kind) {
     if (!Object.prototype.hasOwnProperty.call(shopInventory, kind)) return;
-    shopInventory[kind] = Number(shopInventory[kind] || 0) + 10;
+    const previousStock = Number(shopInventory[kind]) || 0;
+    shopInventory[kind] = previousStock + 10;
+    if (kind === 'magnets' && previousStock === 0) {
+        document.getElementById('magnetUseCount').value = '1';
+    }
     saveShopInventory();
     const feedback = document.getElementById('shop-feedback');
     if (feedback) {
@@ -65,12 +83,18 @@ function startPurchasedRun() {
     runUsage = { lives: 0, shields: 0, magnets: 0 };
     lives = 1 + shopInventory.lives;
 
-    // One magnet automatically lasts from the beginning to the end of this run.
-    runMagnetActive = shopInventory.magnets > 0;
+    // The player chooses how many 15-minute magnet charges to queue for this run.
+    const magnetChoice = document.getElementById('magnetUseCount');
+    const requestedMagnets = Math.max(0, parseInt(magnetChoice.value, 10) || 0);
+    const selectedMagnets = Math.min(requestedMagnets, shopInventory.magnets);
+    runMagnetChargesRemaining = Math.max(0, selectedMagnets - 1);
+    runMagnetActive = selectedMagnets > 0;
     if (runMagnetActive) {
-        runUsage.magnets = 1;
         magnetActive = true;
-        magnetTimer = 60000;
+        magnetTimer = magnetTimeRemaining > 0 ? magnetTimeRemaining : MAGNET_DURATION;
+    } else {
+        magnetActive = false;
+        magnetTimer = 0;
     }
 
     document.getElementById('useShieldBtn').classList.remove('hidden');
@@ -79,16 +103,22 @@ function startPurchasedRun() {
 
 function finishPurchasedRun() {
     if (!runIsActive) return;
+    if (runMagnetActive && magnetActive && magnetTimer > 0) {
+        // Keep the unused part of the active 15-minute charge for the next attempt.
+        magnetTimeRemaining = magnetTimer;
+    } else if (!runMagnetActive) {
+        magnetTimeRemaining = 0;
+    }
     runIsActive = false;
     runMagnetActive = false;
+    runMagnetChargesRemaining = 0;
     magnetActive = false;
     shopInventory.lives = Math.max(0, shopInventory.lives - runUsage.lives);
     shopInventory.shields = Math.max(0, shopInventory.shields - runUsage.shields);
     shopInventory.magnets = Math.max(0, shopInventory.magnets - runUsage.magnets);
     runUsage = { lives: 0, shields: 0, magnets: 0 };
-    localStorage.setItem(SHOP_KEY, JSON.stringify(shopInventory));
+    saveShopInventory();
     document.getElementById('useShieldBtn').classList.add('hidden');
-    renderShop();
 }
 
 function useShield() {
@@ -136,15 +166,26 @@ window.winGame = function () {
 
 const originalUpdate = window.update;
 window.update = function (dt, timestamp) {
-    if (runMagnetActive && gameRunning) {
-        magnetActive = true;
-        magnetTimer = 60000;
+    if (runMagnetActive && gameRunning && magnetTimer <= 0) {
+        // A charge is consumed only after its full 15 minutes have elapsed.
+        runUsage.magnets++;
+        magnetTimeRemaining = 0;
+        if (runMagnetChargesRemaining > 0 && runUsage.magnets < shopInventory.magnets) {
+            runMagnetChargesRemaining--;
+            magnetActive = true;
+            magnetTimer = MAGNET_DURATION;
+        } else {
+            runMagnetActive = false;
+            magnetActive = false;
+        }
+    }
+
+    if (runMagnetActive && magnetActive && timestamp - lastMagnetSaveAt > 1000) {
+        magnetTimeRemaining = magnetTimer;
+        try { localStorage.setItem(MAGNET_TIME_KEY, String(magnetTimeRemaining)); } catch (_) {}
+        lastMagnetSaveAt = timestamp;
     }
     originalUpdate(dt, timestamp);
-    if (runMagnetActive && gameRunning) {
-        magnetActive = true;
-        magnetTimer = 60000;
-    }
     updateShieldButton();
 };
 
