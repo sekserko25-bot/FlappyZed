@@ -1,0 +1,638 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 400;
+canvas.height = 600;
+
+const WIN_SCORE = 150;
+
+let bird, pipes, coins, score, coinCount, gameRunning;
+let lastSpawnTime, lastTimestamp, currentSpeed, speedLevel;
+let fuel;
+
+const COIN_COLOR = '#00ffff';
+
+// ============ PHYSICS ============
+const GRAVITY = 0.45;
+const JUMP_FORCE = -8.5;
+const MAX_FALL_SPEED = 10;
+const PIPE_GAP = 200;
+const PIPE_WIDTH = 80;
+const PIPE_SPAWN_INTERVAL = 1900;
+const BIRD_WIDTH = 38;
+const BIRD_HEIGHT = 42;
+
+// ============ SPEED ============
+const BASE_SPEED = 3.3;
+const SPEED_INCREMENT = 0.5;
+const MAX_SPEED_LEVEL = 7;
+const SCORE_PER_LEVEL = 20;
+
+function init() {
+    bird = {
+        x: 80,
+        y: canvas.height / 2 - BIRD_HEIGHT / 2,
+        width: BIRD_WIDTH,
+        height: BIRD_HEIGHT,
+        velocity: 0,
+        rotation: 0
+    };
+    pipes = [];
+    coins = [];
+    score = 0;
+    coinCount = 0;
+    gameRunning = false;
+    lastSpawnTime = 0;
+    lastTimestamp = 0;
+    currentSpeed = BASE_SPEED;
+    speedLevel = 0;
+    fuel = WIN_SCORE;
+}
+
+function startGame() {
+    init();
+    bird.y = canvas.height / 2 - BIRD_HEIGHT / 2;
+    bird.velocity = JUMP_FORCE;
+    bird.rotation = -0.3;
+    gameRunning = true;
+
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('win-screen').classList.add('hidden');
+
+    lastSpawnTime = performance.now();
+    lastTimestamp = 0;
+    requestAnimationFrame(gameLoop);
+}
+
+function updateSpeed() {
+    const newLevel = Math.min(Math.floor(score / SCORE_PER_LEVEL), MAX_SPEED_LEVEL);
+    if (newLevel > speedLevel) {
+        speedLevel = newLevel;
+        currentSpeed = BASE_SPEED + (speedLevel * SPEED_INCREMENT);
+        showSpeedUpMessage();
+    }
+}
+
+function showSpeedUpMessage() {
+    const msg = document.getElementById('speed-message');
+    if (msg) {
+        msg.textContent = '⚡ DRONES INCOMING! Level ' + speedLevel;
+        msg.classList.remove('hidden');
+        setTimeout(() => msg.classList.add('hidden'), 1200);
+    }
+}
+
+function gameLoop(timestamp) {
+    if (!gameRunning) return;
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    let deltaTime = (timestamp - lastTimestamp) / 1000;
+    if (deltaTime > 0.1) deltaTime = 0.1;
+    lastTimestamp = timestamp;
+    const dt = deltaTime * 60;
+    update(dt, timestamp);
+    draw();
+    if (gameRunning) requestAnimationFrame(gameLoop);
+}
+
+function update(dt, timestamp) {
+    bird.velocity += GRAVITY * dt;
+    if (bird.velocity > MAX_FALL_SPEED) bird.velocity = MAX_FALL_SPEED;
+    bird.y += bird.velocity * dt;
+
+    let targetRotation = Math.min(Math.max(bird.velocity * 0.06, -0.5), 1.0);
+    bird.rotation += (targetRotation - bird.rotation) * 0.15 * dt;
+
+    for (let i = pipes.length - 1; i >= 0; i--) {
+        pipes[i].x -= currentSpeed * dt;
+        if (checkCollision(bird, pipes[i])) { gameOver(); return; }
+        if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
+            pipes[i].passed = true;
+            score++;
+            fuel = WIN_SCORE - score;
+            if (fuel < 0) fuel = 0;
+            updateSpeed();
+            if (score >= WIN_SCORE) { winGame(); return; }
+        }
+        if (pipes[i].x + pipes[i].width < 0) pipes.splice(i, 1);
+    }
+
+    for (let i = coins.length - 1; i >= 0; i--) {
+        coins[i].x -= currentSpeed * dt;
+        coins[i].rotation += 0.08 * dt;
+        if (checkCoinCollision(bird, coins[i])) {
+            coinCount++;
+            coins.splice(i, 1);
+            continue;
+        }
+        if (coins[i].x + coins[i].radius < 0) coins.splice(i, 1);
+    }
+
+    if (bird.y + bird.height >= canvas.height) {
+        bird.y = canvas.height - bird.height;
+        gameOver();
+        return;
+    }
+    if (bird.y < 0) { bird.y = 0; bird.velocity = 0; }
+
+    if (timestamp - lastSpawnTime > PIPE_SPAWN_INTERVAL) {
+        spawnPipe();
+        lastSpawnTime = timestamp;
+    }
+}
+
+function checkCollision(bird, pipe) {
+    const birdLeft = bird.x + 6;
+    const birdRight = bird.x + bird.width - 6;
+    const birdTop = bird.y + 6;
+    const birdBottom = bird.y + bird.height - 6;
+    const pipeLeft = pipe.x;
+    const pipeRight = pipe.x + pipe.width;
+
+    if (birdRight > pipeLeft && birdLeft < pipeRight &&
+        birdBottom > 0 && birdTop < pipe.gapY) return true;
+
+    const bottomTop = pipe.gapY + pipe.gap;
+    if (birdRight > pipeLeft && birdLeft < pipeRight &&
+        birdBottom > bottomTop && birdTop < canvas.height) return true;
+
+    return false;
+}
+
+function checkCoinCollision(bird, coin) {
+    const cx = bird.x + bird.width / 2;
+    const cy = bird.y + bird.height / 2;
+    const dx = cx - coin.x;
+    const dy = cy - coin.y;
+    return Math.sqrt(dx * dx + dy * dy) < (bird.width / 2) + coin.radius;
+}
+
+// ============ UNDERGROUND WALL + POSTER ============
+function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
+    ctx.save();
+    
+    const baseR = Math.floor(42 + lightLevel * 40);
+    const baseG = Math.floor(42 + lightLevel * 40);
+    const baseB = Math.floor(42 + lightLevel * 40);
+    
+    const wallGradient = ctx.createLinearGradient(x, 0, x + w, 0);
+    wallGradient.addColorStop(0, `rgb(${baseR - 20}, ${baseG - 20}, ${baseB - 20})`);
+    wallGradient.addColorStop(0.5, `rgb(${baseR}, ${baseG}, ${baseB})`);
+    wallGradient.addColorStop(1, `rgb(${baseR - 30}, ${baseG - 30}, ${baseB - 30})`);
+    ctx.fillStyle = wallGradient;
+    ctx.fillRect(x, y, w, h);
+    
+    ctx.fillStyle = 'rgba(139, 69, 19, 0.4)';
+    for (let i = 0; i < 5; i++) {
+        const lx = x + (i * 17) % w;
+        const ly = y + (i * 23) % h;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 8 + (i % 3) * 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.fillStyle = '#555';
+    for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.arc(x + 8, y + 20 + i * 40, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + w - 8, y + 20 + i * 40, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(x + w - 6, y, 6, h);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(x, y, 4, h);
+    
+    const posterH = 70;
+    const posterW = w - 20;
+    const posterX = x + 10;
+    let posterY;
+    
+    if (isTop) posterY = y + h - posterH - 15;
+    else posterY = y + 15;
+    
+    if (h > 100) {
+        ctx.globalAlpha = Math.max(0, 1 - lightLevel * 1.5);
+        
+        ctx.fillStyle = '#d4c5a0';
+        ctx.fillRect(posterX, posterY, posterW, posterH);
+        
+        ctx.fillStyle = '#a89670';
+        ctx.fillRect(posterX, posterY, posterW, 3);
+        ctx.fillRect(posterX, posterY + posterH - 3, posterW, 3);
+        
+        if (character === 'krump') {
+            drawKrumpPoster(posterX, posterY, posterW, posterH);
+        } else {
+            drawZorakPoster(posterX, posterY, posterW, posterH);
+        }
+        
+        ctx.globalAlpha = 1;
+    }
+    
+    ctx.restore();
+}
+
+function drawKrumpPoster(px, py, pw, ph) {
+    const cx = px + pw / 2;
+    const cy = py + ph / 2 - 5;
+    
+    ctx.fillStyle = '#8b0000';
+    ctx.fillRect(px + 3, py + 3, pw - 6, 14);
+    
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('KRUMP', cx, py + 10);
+    
+    ctx.fillStyle = '#ffb366';
+    ctx.beginPath(); ctx.arc(cx, cy + 5, 14, 0, Math.PI * 2); ctx.fill();
+    
+    ctx.fillStyle = '#ff6600';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy - 5); ctx.lineTo(cx - 10, cy - 18); ctx.lineTo(cx - 4, cy - 8);
+    ctx.lineTo(cx, cy - 20); ctx.lineTo(cx + 5, cy - 8); ctx.lineTo(cx + 12, cy - 18);
+    ctx.lineTo(cx + 14, cy - 5); ctx.closePath(); ctx.fill();
+    
+    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 1); ctx.lineTo(cx - 3, cy + 4);
+    ctx.moveTo(cx + 10, cy + 1); ctx.lineTo(cx + 3, cy + 4);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(cx - 5, cy + 6, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 5, cy + 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy + 14, 4, 0, Math.PI); ctx.stroke();
+    
+    ctx.fillStyle = '#8b0000';
+    ctx.font = 'bold 7px Arial';
+    ctx.fillText('VOTE FOR HIM!', cx, py + ph - 6);
+}
+
+function drawZorakPoster(px, py, pw, ph) {
+    const cx = px + pw / 2;
+    const cy = py + ph / 2 - 5;
+    
+    ctx.fillStyle = '#000';
+    ctx.fillRect(px + 3, py + 3, pw - 6, 14);
+    
+    ctx.fillStyle = '#00ffff';
+    ctx.font = 'bold 9px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ZORAK CREED', cx, py + 10);
+    
+    ctx.fillStyle = '#f5c99b';
+    ctx.beginPath(); ctx.arc(cx, cy + 5, 14, 0, Math.PI * 2); ctx.fill();
+    
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(cx, cy - 2, 14, Math.PI, 0); ctx.fill();
+    
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath(); ctx.arc(cx - 5, cy + 5, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + 5, cy + 5, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 1, cy + 5); ctx.lineTo(cx + 1, cy + 5); ctx.stroke();
+    
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(cx - 5, cy + 5, 1.5, 0, Math.PI * 2);
+    ctx.arc(cx + 5, cy + 5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx - 4, cy + 14); ctx.lineTo(cx + 4, cy + 14); ctx.stroke();
+    
+    ctx.fillStyle = '#00ffff';
+    ctx.font = 'bold 7px Arial';
+    ctx.fillText('TRUST HIM!', cx, py + ph - 6);
+}
+
+// ============ ZED DRAWING ============
+function drawZed(cx, cy, rotation, fuelRatio) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation);
+
+    // Rocket
+    ctx.fillStyle = '#555';
+    ctx.fillRect(-26, -6, 22, 12);
+    ctx.fillStyle = '#999';
+    ctx.beginPath();
+    ctx.moveTo(-26, -6); ctx.lineTo(-33, 0); ctx.lineTo(-26, 6);
+    ctx.closePath(); ctx.fill();
+    
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath();
+    ctx.moveTo(-10, -6); ctx.lineTo(-6, -13); ctx.lineTo(-8, -6); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-10, 6); ctx.lineTo(-6, 13); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill();
+    
+    if (fuelRatio > 0.1) {
+        const flameLength = (12 + Math.random() * 10) * fuelRatio;
+        const fg = ctx.createLinearGradient(-26, 0, -26 - flameLength, 0);
+        fg.addColorStop(0, '#ffffff');
+        fg.addColorStop(0.3, '#ffcc00');
+        fg.addColorStop(0.6, '#ff6600');
+        fg.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.moveTo(-26, -5);
+        ctx.lineTo(-26 - flameLength, 0);
+        ctx.lineTo(-26, 5);
+        ctx.closePath();
+        ctx.fill();
+    } else {
+        ctx.fillStyle = 'rgba(255, 100, 0, ' + Math.random() + ')';
+        ctx.beginPath();
+        ctx.arc(-28, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Legs
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-4, 12, 6, 12);
+    ctx.fillRect(4, 12, 6, 12);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-5, 22, 8, 4);
+    ctx.fillRect(3, 22, 8, 4);
+    
+    // Coat
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.roundRect(-12, -10, 26, 26, 4);
+    ctx.fill();
+    
+    // Lining
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(-12, -10, 3, 26);
+    ctx.fillStyle = '#ff00ff';
+    ctx.fillRect(-9, -10, 2, 26);
+    
+    // Shirt
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-2, -8, 6, 16);
+    
+    // Tie
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.moveTo(0, -8); ctx.lineTo(-3, -2); ctx.lineTo(0, 10); ctx.lineTo(3, -2);
+    ctx.closePath(); ctx.fill();
+    
+    // Arms
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(-16, -8, 6, 16);
+    ctx.fillStyle = '#666';
+    ctx.fillRect(10, -8, 6, 16);
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(11, -6, 4, 2); ctx.fillRect(11, -2, 4, 2);
+    ctx.fillRect(11, 2, 4, 2); ctx.fillRect(11, 6, 4, 2);
+    
+    // Head
+    ctx.fillStyle = '#f5c99b';
+    ctx.beginPath(); ctx.arc(0, -18, 11, 0, Math.PI * 2); ctx.fill();
+    
+    // Hair
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(0, -22, 11, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath();
+    ctx.moveTo(-8, -24); ctx.lineTo(-12, -32); ctx.lineTo(-6, -26);
+    ctx.closePath(); ctx.fill();
+    
+    // Cyber visor
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-9, -20, 8, 5);
+    ctx.fillStyle = fuelRatio > 0.1 ? '#ff0000' : '#666';
+    ctx.fillRect(-8, -19, 6, 3);
+    
+    // Eye
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(5, -18, 1.5, 0, Math.PI * 2); ctx.fill();
+    
+    // Mouth
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(-2, -13); ctx.lineTo(4, -13); ctx.stroke();
+    
+    // USB necklace
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(-2, -7, 4, 3);
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillRect(-1, -6, 2, 1);
+    
+    ctx.restore();
+}
+
+// ============ BACKGROUND ============
+function drawBackground(lightLevel) {
+    const topR = Math.floor(10 + lightLevel * 40);
+    const topG = Math.floor(10 + lightLevel * 100);
+    const topB = Math.floor(10 + lightLevel * 180);
+    const botR = Math.floor(10 + lightLevel * 20);
+    const botG = Math.floor(10 + lightLevel * 60);
+    const botB = Math.floor(10 + lightLevel * 120);
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, `rgb(${topR}, ${topG}, ${topB})`);
+    gradient.addColorStop(1, `rgb(${botR}, ${botG}, ${botB})`);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (lightLevel < 0.7) {
+        ctx.strokeStyle = `rgba(80, 80, 80, ${0.15 * (1 - lightLevel)})`;
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 20; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * 30);
+            ctx.lineTo(canvas.width, i * 30);
+            ctx.stroke();
+        }
+    }
+    
+    if (lightLevel < 0.8) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.6 * (1 - lightLevel)})`;
+        for (let i = 0; i < 5; i++) {
+            const x = (i * 100 + (Date.now() / 50) % 100);
+            ctx.beginPath();
+            ctx.arc(x, 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    if (lightLevel > 0.4) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightLevel - 0.4})`;
+        for (let i = 0; i < 40; i++) {
+            const x = (i * 67) % canvas.width;
+            const y = (i * 41) % (canvas.height * 0.6);
+            ctx.fillRect(x, y, 2, 2);
+        }
+    }
+    
+    ctx.fillStyle = `rgba(60, 60, 60, ${0.3 * (1 - lightLevel)})`;
+    ctx.fillRect(0, 50, canvas.width, 3);
+    ctx.fillRect(0, canvas.height - 50, canvas.width, 3);
+}
+
+// ============ FUEL BAR ============
+function drawFuelBar() {
+    const barWidth = 180;
+    const barHeight = 14;
+    const barX = canvas.width / 2 - barWidth / 2;
+    const barY = 110;
+    const fuelRatio = fuel / WIN_SCORE;
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+    
+    ctx.fillStyle = '#333';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    const fuelGradient = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+    if (fuelRatio > 0.5) {
+        fuelGradient.addColorStop(0, '#00ff88');
+        fuelGradient.addColorStop(1, '#00ffff');
+    } else if (fuelRatio > 0.2) {
+        fuelGradient.addColorStop(0, '#ffcc00');
+        fuelGradient.addColorStop(1, '#ff6600');
+    } else {
+        fuelGradient.addColorStop(0, '#ff0000');
+        fuelGradient.addColorStop(1, '#ff4444');
+    }
+    ctx.fillStyle = fuelGradient;
+    ctx.fillRect(barX, barY, barWidth * fuelRatio, barHeight);
+    
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#000';
+    ctx.fillText('FUEL: ' + fuel, canvas.width / 2, barY - 5);
+    ctx.shadowBlur = 0;
+}
+
+// ============ DRAW ============
+function draw() {
+    const lightLevel = Math.min(score / WIN_SCORE, 1);
+    
+    drawBackground(lightLevel);
+    
+    pipes.forEach(pipe => {
+        const bottomY = pipe.gapY + pipe.gap;
+        const bottomHeight = canvas.height - bottomY;
+        drawUndergroundWall(pipe.x, 0, pipe.width, pipe.gapY, true, pipe.character, lightLevel);
+        drawUndergroundWall(pipe.x, bottomY, pipe.width, bottomHeight, false, pipe.character, lightLevel);
+    });
+
+    coins.forEach(coin => {
+        ctx.save();
+        ctx.translate(coin.x, coin.y);
+        ctx.rotate(coin.rotation);
+        ctx.fillStyle = COIN_COLOR;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = COIN_COLOR;
+        ctx.beginPath();
+        ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Z', 0, 0);
+        ctx.restore();
+    });
+
+    const fuelRatio = fuel / WIN_SCORE;
+    drawZed(bird.x + bird.width / 2, bird.y + bird.height / 2, bird.rotation, fuelRatio);
+
+    // HUD
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 26px Arial';
+    ctx.textAlign = 'left';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#000';
+    ctx.fillText('Score: ' + score, 20, 45);
+
+    ctx.fillStyle = COIN_COLOR;
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('Coins: ' + coinCount, 20, 75);
+
+    ctx.fillStyle = '#ff6600';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText('Speed: ' + speedLevel + '/' + MAX_SPEED_LEVEL, canvas.width - 20, 45);
+    ctx.fillStyle = '#ffcc00';
+    ctx.textAlign = 'right';
+    ctx.fillText('Target: ' + WIN_SCORE, canvas.width - 20, 65);
+    
+    drawFuelBar();
+    
+    ctx.fillStyle = lightLevel > 0.7 ? '#00ffff' : '#ff0000';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(lightLevel > 0.7 ? 'SURFACE APPROACHING...' : 'DEPTH 7 → SURFACE', canvas.width - 20, canvas.height - 15);
+    
+    ctx.shadowBlur = 0;
+}
+
+function spawnPipe() {
+    const minGapY = 80;
+    const maxGapY = canvas.height - PIPE_GAP - 80;
+    const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
+    const character = Math.random() > 0.5 ? 'krump' : 'zorak';
+    pipes.push({ x: canvas.width, width: PIPE_WIDTH, gapY, gap: PIPE_GAP, passed: false, character });
+    if (Math.random() > 0.4) {
+        coins.push({ x: canvas.width + PIPE_WIDTH / 2, y: gapY + PIPE_GAP / 2, radius: 12, rotation: 0 });
+    }
+}
+
+function gameOver() {
+    gameRunning = false;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalCoins').textContent = coinCount;
+    document.getElementById('game-over-screen').classList.remove('hidden');
+}
+
+function winGame() {
+    gameRunning = false;
+    document.getElementById('winScore').textContent = score;
+    document.getElementById('winCoins').textContent = coinCount;
+    document.getElementById('win-screen').classList.remove('hidden');
+    localStorage.setItem('zakardiya_progress', 2);
+    const completed = JSON.parse(localStorage.getItem('zakardiya_completed') || '[]');
+    if (!completed.includes(1)) {
+        completed.push(1);
+        localStorage.setItem('zakardiya_completed', JSON.stringify(completed));
+    }
+}
+
+function zipla() { if (gameRunning) bird.velocity = JUMP_FORCE; }
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); zipla(); }
+});
+canvas.addEventListener('click', zipla);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); zipla(); }, { passive: false });
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('backBtn').addEventListener('click', () => window.location.href = 'index.html');
+document.getElementById('menuBtn').addEventListener('click', () => window.location.href = 'index.html');
+document.getElementById('nextGameBtn').addEventListener('click', () => {
+    alert('Chapter 2: STICK WAR\n\nZed reached the surface but his rocket fuel is gone. Now he fights Zorak Creed\'s guards with a stick on the streets. Coming soon! 🚧');
+    window.location.href = 'index.html';
+});
+
+init();

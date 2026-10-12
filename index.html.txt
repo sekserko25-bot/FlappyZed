@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZED'S REVENGE - Zakardia 3101</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="hub-container">
+        <h1 class="hub-title">ZED'S REVENGE</h1>
+        <p class="hub-subtitle">Zakardia 3101 — Rise of the Small Investor</p>
+        <div class="progress-info">
+            <span id="progress-text">Progress: 0 / 10</span>
+        </div>
+        <div class="games-grid" id="gamesGrid"></div>
+        <div class="hub-buttons">
+            <button id="storyBtn">📖 READ STORY</button>
+            <button id="resetBtn">🔄 RESET</button>
+        </div>
+    </div>
+    <script src="hub.js"></script>
+</body>
+</html>
