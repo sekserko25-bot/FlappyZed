@@ -701,7 +701,9 @@ function draw() {
     if (magnetActive) {
         ctx.fillStyle = '#ff00ff';
         ctx.font = 'bold 12px Arial';
-        ctx.fillText('🧲 ' + Math.ceil(magnetTimer / 1000) + 's', 20, 145);
+        const remainingMagnetSeconds = Math.ceil(magnetTimer / 1000);
+        const magnetClock = Math.floor(remainingMagnetSeconds / 60) + ':' + String(remainingMagnetSeconds % 60).padStart(2, '0');
+        ctx.fillText('🧲 ' + magnetClock, 20, 145);
     }
 
     drawFuelBar();
