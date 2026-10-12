@@ -312,7 +312,7 @@ function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel, slogan) {
 
 function drawKrumpPoster(px, py, pw, ph, slogan) {
     const cx = px + pw / 2;
-    const cy = py + 43;
+    const cy = py + 49;
     // Orange-haired boss in the pink suit from the reference.
     ctx.fillStyle = '#771329';
     ctx.fillRect(px + 2, py + 2, pw - 4, 14);
@@ -377,7 +377,7 @@ function drawKrumpPoster(px, py, pw, ph, slogan) {
 
 function drawZorakPoster(px, py, pw, ph, slogan) {
     const cx = px + pw / 2;
-    const cy = py + 43;
+    const cy = py + 49;
     // The bespectacled boy in a black shirt from the reference.
     ctx.fillStyle = '#061d25';
     ctx.fillRect(px + 2, py + 2, pw - 4, 14);
