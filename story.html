@@ -1,14 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZED'S REVENGE - Prologue</title>
+    <title>ZED'S REVENGE — Prolog</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body { background:#08090e; color:#f5f2ea; overflow:hidden; }
+        #matrixIntro { cursor:pointer; }
+        .intro-content { width:min(94vw,700px); }
+        .intro-line { font-family:'Courier New',monospace; }
+        .story-shell { display:none; position:fixed; inset:0; z-index:100; background:radial-gradient(ellipse at 50% 40%,#202333 0,#090a10 72%); }
+        .story-top { position:absolute; top:0; left:0; right:0; height:62px; padding:0 22px; display:flex; align-items:center; justify-content:space-between; background:rgba(5,6,10,.88); border-bottom:1px solid #383947; z-index:3; }
+        .story-brand { color:#6be8f4; font-weight:900; letter-spacing:3px; font-size:13px; }
+        .story-count { color:#b8b9c4; font:700 12px 'Courier New',monospace; letter-spacing:2px; }
+        .story-progress { position:absolute; top:61px; left:0; right:0; height:3px; background:#22232c; z-index:4; }
+        .story-progress i { display:block; height:100%; width:16.66%; background:linear-gradient(90deg,#ff3d55,#ffb442,#54e7f2); transition:width .35s; }
+        .story-stage { position:absolute; inset:65px 0 84px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; gap:14px; }
+        .story-page { display:none; width:min(88vw,560px); max-height:calc(100% - 74px); aspect-ratio:1.12 / 1; position:relative; background-image:url('images/story-page.png'); background-size:200% 300%; border:5px solid #f4eee0; box-shadow:0 12px 44px #000,0 0 22px rgba(255,65,84,.16); overflow:hidden; animation:pageIn .35s ease-out; }
+        .story-page.active { display:block; }
+        @keyframes pageIn { from {opacity:0; transform:translateY(12px) scale(.985)} to {opacity:1; transform:none} }
+        .story-page::after { content:''; position:absolute; inset:55% 0 0; background:linear-gradient(transparent,rgba(5,6,10,.92)); }
+        .page-caption { position:absolute; z-index:1; left:0; right:0; bottom:0; padding:clamp(14px,4vw,25px); }
+        .page-kicker { color:#ffbd55; font:900 11px 'Courier New',monospace; letter-spacing:3px; margin-bottom:8px; text-transform:uppercase; }
+        .page-caption h1 { font-size:clamp(23px,5vw,38px); line-height:1; color:white; text-shadow:0 2px 8px #000; margin-bottom:9px; }
+        .page-caption p { font-size:clamp(14px,2.5vw,17px); line-height:1.45; color:#f1eee8; max-width:490px; text-shadow:0 2px 7px #000; }
+        .story-subtitle { width:min(88vw,560px); min-height:38px; color:#aeb1bd; font-size:13px; text-align:center; letter-spacing:.5px; }
+        .story-controls { position:absolute; bottom:0; left:0; right:0; height:82px; display:flex; align-items:center; justify-content:center; gap:12px; background:rgba(5,6,10,.9); border-top:1px solid #383947; z-index:3; }
+        .story-controls button { padding:11px 20px; font-size:13px; }
+        #prevBtn { background:#30333f; color:white; }
+        #skipBtn { position:absolute; top:14px; right:14px; z-index:5; padding:8px 14px; font-size:11px; background:#343541; color:#fff; }
+        @media (max-width:600px) {
+            .story-top { height:54px; padding:0 14px; }
+            .story-progress { top:53px; }
+            .story-stage { inset:57px 0 78px; padding:12px; gap:10px; }
+            .story-page { width:min(94vw,520px); aspect-ratio:.83 / 1; background-size:200% 300%; }
+            .story-controls { height:76px; }
+            .story-controls button { padding:10px 15px; font-size:12px; }
+            .page-caption { padding:15px; }
+            .story-subtitle { font-size:12px; }
+        }
+    </style>
 </head>
 <body>
-
-    <!-- MATRIX INTRO -->
     <div id="matrixIntro">
         <canvas id="matrixCanvas"></canvas>
         <div class="intro-content">
@@ -30,133 +64,89 @@
         </div>
     </div>
 
-    <!-- MANGA PAGE -->
-    <div class="manga-page-container" id="mangaContainer" style="display:none;">
-        <div class="manga-page-scroll" id="mangaScroll">
-            <img src="images/story-page.png" alt="Prologue" class="manga-page-image">
+    <main class="story-shell" id="storyShell" aria-live="polite">
+        <header class="story-top">
+            <div class="story-brand">ZED'S REVENGE <span style="color:#777">/ PROLOG</span></div>
+            <div class="story-count" id="pageCount">01 / 06</div>
+        </header>
+        <div class="story-progress"><i id="progressFill"></i></div>
+        <button id="skipBtn">HİKÂYEYİ GEÇ ⏩</button>
+        <section class="story-stage">
+            <article class="story-page active" data-panel="0" style="background-position:0% 0%">
+                <div class="page-caption"><div class="page-kicker">Zakardia • 3101</div><h1>Bir sabah</h1><p>Zed, Zerath'ın yeraltındaki odasında uyandı. Dışarıdaki neon şehir her zamanki gibi parlıyordu. O sabah, hayatının değişeceğini henüz bilmiyordu.</p></div>
+            </article>
+            <article class="story-page" data-panel="1" style="background-position:100% 0%">
+                <div class="page-caption"><div class="page-kicker">Piyasa çöküyor</div><h1>Ekran kıpkırmızı</h1><p>Telefonu durmadan titredi. Grafikler dibe çakılıyor, Zed'in biriktirdiği her şey saniyeler içinde eriyordu. Ekranda tek bir kelime belirdi: <strong>LIQ</strong>.</p></div>
+            </article>
+            <article class="story-page" data-panel="2" style="background-position:0% 50%">
+                <div class="page-caption"><div class="page-kicker">Her şey gitti</div><h1>Sıfır bakiye</h1><p>Birikimleri, evi için ayırdığı para, geleceğe dair umudu… Hepsi tasfiye edilmişti. Zed'in elleri titredi; öfkesi korkusunu bastırdı.</p></div>
+            </article>
+            <article class="story-page" data-panel="3" style="background-position:100% 50%">
+                <div class="page-caption"><div class="page-kicker">Zorak'ın düzeni</div><h1>Bu bir kaza değildi</h1><p>Şehrin dev ekranlarında Zorak Creed zaferini kutluyordu. Kuklası Krump, küçük yatırımcıları suçlarken gerçek sorumlular yukarıdaki kulelerde saklanıyordu.</p></div>
+            </article>
+            <article class="story-page" data-panel="4" style="background-position:0% 100%">
+                <div class="page-caption"><div class="page-kicker">Öfke yemin olur</div><h1>Zed kararını verdi</h1><p>O gece uyumadı. Kaybettiklerini geri almak ve bu düzeni kuranları yenmek için yola çıkacaktı. Önce yeraltından yüzeye ulaşmalıydı.</p></div>
+            </article>
+            <article class="story-page" data-panel="5" style="background-position:100% 100%">
+                <div class="page-caption"><div class="page-kicker">VOLKAN-1 • ateşleme</div><h1>Yükseliş başlıyor</h1><p>Hurda parçalarından yaptığı roketi VOLKAN-1'i çalıştırdı. Zed, Depth 7'nin tavanına doğru fırladı. İlk hedefi: yüzeye ulaşmak. Sonrası için hesabı vardı.</p></div>
+            </article>
+        </section>
+        <div class="story-controls">
+            <button id="prevBtn">← GERİ</button>
+            <button id="nextBtn">SONRAKİ →</button>
         </div>
-        
-        <div class="scroll-indicator" id="scrollHint">SCROLL TO READ ▼</div>
-        <div class="manga-controls-fixed">
-            <button id="skipBtn">SKIP ⏩</button>
-        </div>
-        <div class="manga-progress-bottom">
-            <div class="manga-progress-fill" id="progressFill"></div>
-        </div>
-        <div class="manga-finish" id="finishScreen">
-            <div class="finish-content">
-                <h2>PROLOGUE COMPLETE</h2>
-                <p>Zed is ready to rise.</p>
-                <button id="continueBtn">🎮 START CHAPTER 1</button>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script>
-        // ============ MATRIX INTRO ============
         const mCanvas = document.getElementById('matrixCanvas');
         const mCtx = mCanvas.getContext('2d');
-        
-        function resizeMatrix() {
-            mCanvas.width = window.innerWidth;
-            mCanvas.height = window.innerHeight;
-        }
-        resizeMatrix();
-        window.addEventListener('resize', resizeMatrix);
-
-        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ZEDKRUMPZORAKCREED';
-        const fontSize = 18;
-        let drops = [];
-        
-        function initDrops() {
-            const columns = Math.floor(mCanvas.width / fontSize);
-            drops = [];
-            for (let i = 0; i < columns; i++) {
-                drops[i] = Math.floor(Math.random() * -50);
-            }
-        }
+        function resizeMatrix() { mCanvas.width = innerWidth; mCanvas.height = innerHeight; }
+        resizeMatrix(); addEventListener('resize', resizeMatrix);
+        const chars = 'アイウエオカキクケコサシスセソ0123456789ZEDKRUMPZORAK';
+        const fontSize = 18; let drops = [];
+        function initDrops() { drops = Array.from({length:Math.floor(mCanvas.width/fontSize)},()=>Math.floor(Math.random()*-50)); }
         initDrops();
-
-        function drawMatrix() {
-            mCtx.fillStyle = 'rgba(0, 0, 0, 0.06)';
-            mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
-            mCtx.fillStyle = '#00ff41';
-            mCtx.font = 'bold ' + fontSize + 'px monospace';
-            
-            for (let i = 0; i < drops.length; i++) {
-                const text = chars[Math.floor(Math.random() * chars.length)];
-                mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-                
-                if (drops[i] * fontSize > mCanvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
-        const matrixInterval = setInterval(drawMatrix, 35);
+        const matrixInterval = setInterval(() => {
+            mCtx.fillStyle='rgba(0,0,0,.08)'; mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
+            mCtx.fillStyle='#00ff41'; mCtx.font='bold '+fontSize+'px monospace';
+            drops.forEach((drop,i)=>{mCtx.fillText(chars[Math.floor(Math.random()*chars.length)],i*fontSize,drop*fontSize); if(drop*fontSize>mCanvas.height&&Math.random()>.975)drops[i]=0; drops[i]++;});
+        },35);
 
         const intro = document.getElementById('matrixIntro');
-        const mangaContainer = document.getElementById('mangaContainer');
-
+        const shell = document.getElementById('storyShell');
+        let introClosed = false;
         function closeIntro() {
-            clearInterval(matrixInterval);
-            intro.style.transition = 'opacity 0.8s';
-            intro.style.opacity = '0';
-            setTimeout(() => {
-                intro.style.display = 'none';
-                mangaContainer.style.display = 'block';
-                startManga();
-            }, 800);
+            if(introClosed)return; introClosed=true; clearInterval(matrixInterval);
+            intro.style.transition='opacity .55s'; intro.style.opacity='0';
+            setTimeout(()=>{intro.style.display='none'; shell.style.display='block';},550);
         }
+        intro.addEventListener('click',closeIntro);
+        intro.addEventListener('touchstart',e=>{e.preventDefault();closeIntro();},{passive:false});
+        setTimeout(closeIntro,6500);
 
-        intro.addEventListener('click', closeIntro);
-        intro.addEventListener('touchstart', (e) => { e.preventDefault(); closeIntro(); }, { passive: false });
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Enter' || e.code === 'Space') {
-                e.preventDefault();
-                closeIntro();
-            }
+        const pages=[...document.querySelectorAll('.story-page')];
+        let page=0;
+        function showPage(next) {
+            page=Math.max(0,Math.min(pages.length-1,next));
+            pages.forEach((el,i)=>el.classList.toggle('active',i===page));
+            document.getElementById('pageCount').textContent=String(page+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0');
+            document.getElementById('progressFill').style.width=((page+1)/pages.length*100)+'%';
+            document.getElementById('prevBtn').disabled=page===0;
+            document.getElementById('nextBtn').textContent=page===pages.length-1?'MACERAYA BAŞLA 🚀':'SONRAKİ →';
+        }
+        function finishStory() {
+            localStorage.setItem('zed_story_seen','true');
+            localStorage.setItem('zakardiya_progress',1);
+            location.href='game1.html';
+        }
+        document.getElementById('prevBtn').addEventListener('click',()=>showPage(page-1));
+        document.getElementById('nextBtn').addEventListener('click',()=>page===pages.length-1?finishStory():showPage(page+1));
+        document.getElementById('skipBtn').addEventListener('click',finishStory);
+        document.addEventListener('keydown',e=>{
+            if(e.key==='ArrowRight'||e.code==='Space'){e.preventDefault();page===pages.length-1?finishStory():showPage(page+1);}
+            else if(e.key==='ArrowLeft')showPage(page-1);
         });
-        setTimeout(closeIntro, 15000);
-
-        // ============ MANGA ============
-        let mangaStarted = false;
-        function startManga() {
-            if (mangaStarted) return;
-            mangaStarted = true;
-            
-            const scroll = document.getElementById('mangaScroll');
-            const hint = document.getElementById('scrollHint');
-            const progress = document.getElementById('progressFill');
-            const finishScreen = document.getElementById('finishScreen');
-            let finished = false;
-
-            function updateProgress() {
-                const scrollTop = scroll.scrollTop;
-                const scrollHeight = scroll.scrollHeight - scroll.clientHeight;
-                const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-                progress.style.width = pct + '%';
-                
-                hint.style.opacity = scrollTop > 100 ? '0' : '1';
-                
-                if (pct >= 95 && !finished) {
-                    finished = true;
-                    setTimeout(() => finishScreen.classList.add('visible'), 500);
-                }
-            }
-
-            scroll.addEventListener('scroll', updateProgress);
-            updateProgress();
-
-            function finishStory() {
-                localStorage.setItem('zed_story_seen', 'true');
-                localStorage.setItem('zakardiya_progress', 1);
-                window.location.href = 'game1.html';
-            }
-
-            document.getElementById('skipBtn').addEventListener('click', finishStory);
-            document.getElementById('continueBtn').addEventListener('click', finishStory);
-        }
+        showPage(0);
     </script>
 </body>
 </html>
