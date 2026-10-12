@@ -259,7 +259,7 @@ function checkPowerUpCollision(bird, pu) {
 }
 
 // ============ DUVAR + POSTER ============
-function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
+function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel, slogan) {
     ctx.save();
     const baseR = Math.floor(42 + lightLevel * 40);
     const baseG = Math.floor(42 + lightLevel * 40);
@@ -303,115 +303,141 @@ function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
         ctx.fillStyle = '#a89670';
         ctx.fillRect(posterX, posterY, posterW, 3);
         ctx.fillRect(posterX, posterY + posterH - 3, posterW, 3);
-        if (character === 'krump') drawKrumpPoster(posterX, posterY, posterW, posterH);
-        else drawZorakPoster(posterX, posterY, posterW, posterH);
+        if (character === 'krump') drawKrumpPoster(posterX, posterY, posterW, posterH, slogan);
+        else drawZorakPoster(posterX, posterY, posterW, posterH, slogan);
         ctx.globalAlpha = 1;
     }
     ctx.restore();
 }
 
-function drawKrumpPoster(px, py, pw, ph) {
+function drawKrumpPoster(px, py, pw, ph, slogan) {
     const cx = px + pw / 2;
-    const cy = py + ph / 2 + 8;
-    ctx.fillStyle = '#8b0000';
+    const cy = py + 43;
+    // Orange-haired boss in the pink suit from the reference.
+    ctx.fillStyle = '#771329';
     ctx.fillRect(px + 2, py + 2, pw - 4, 14);
-    ctx.fillStyle = '#ffcc00';
-    ctx.font = 'bold 10px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('KRUMP', cx, py + 9);
-    ctx.fillStyle = '#f5c99b';
-    ctx.beginPath(); ctx.ellipse(cx, cy, 20, 19, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f0b880';
-    ctx.beginPath(); ctx.ellipse(cx - 13, cy + 6, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(cx + 13, cy + 6, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ff6600';
-    ctx.beginPath();
-    ctx.moveTo(cx - 20, cy - 6);
-    ctx.quadraticCurveTo(cx - 24, cy - 26, cx - 13, cy - 28);
-    ctx.lineTo(cx - 9, cy - 21); ctx.lineTo(cx - 3, cy - 30); ctx.lineTo(cx + 2, cy - 21);
-    ctx.lineTo(cx + 8, cy - 30); ctx.lineTo(cx + 13, cy - 21);
-    ctx.quadraticCurveTo(cx + 24, cy - 26, cx + 20, cy - 6);
-    ctx.quadraticCurveTo(cx + 10, cy - 15, cx, cy - 13);
-    ctx.quadraticCurveTo(cx - 10, cy - 15, cx - 20, cy - 6);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - 13, cy - 5); ctx.lineTo(cx - 4, cy - 1);
-    ctx.moveTo(cx + 13, cy - 5); ctx.lineTo(cx + 4, cy - 1);
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.ellipse(cx - 8, cy + 2, 4.5, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(cx + 8, cy + 2, 4.5, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(cx - 8, cy + 2, 2, 0, Math.PI * 2); ctx.arc(cx + 8, cy + 2, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#e0a070';
-    ctx.beginPath(); ctx.ellipse(cx, cy + 7, 3, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.8;
-    ctx.beginPath(); ctx.arc(cx, cy + 14, 5, Math.PI + 0.3, -0.3); ctx.stroke();
-    ctx.fillStyle = '#ff69b4';
-    ctx.fillRect(cx - 22, py + ph - 20, 44, 17);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(cx - 6, py + ph - 20, 12, 17);
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.moveTo(cx, py + ph - 20); ctx.lineTo(cx - 4, py + ph - 11);
-    ctx.lineTo(cx, py + ph - 1); ctx.lineTo(cx + 4, py + ph - 11);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#8b0000';
-    ctx.font = 'bold 7px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('VOTE!', cx, py + ph - 4);
-}
-
-function drawZorakPoster(px, py, pw, ph) {
-    const cx = px + pw / 2;
-    const cy = py + ph / 2 + 8;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(px + 2, py + 2, pw - 4, 14);
-    ctx.fillStyle = '#00ffff';
+    ctx.fillStyle = '#fff3d6';
     ctx.font = 'bold 8px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('ZORAK CREED', cx, py + 9);
-    ctx.fillStyle = '#f5c99b';
-    ctx.beginPath(); ctx.ellipse(cx, cy, 16, 19, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#000';
+    ctx.fillText('KRUMP', cx, py + 9);
+
+    // Pink jacket and red tie frame the portrait.
+    ctx.fillStyle = '#ec4f9b';
     ctx.beginPath();
-    ctx.moveTo(cx - 16, cy - 5);
-    ctx.quadraticCurveTo(cx - 18, cy - 22, cx, cy - 24);
-    ctx.quadraticCurveTo(cx + 18, cy - 22, cx + 16, cy - 5);
-    ctx.quadraticCurveTo(cx + 11, cy - 12, cx, cy - 11);
-    ctx.quadraticCurveTo(cx - 11, cy - 12, cx - 16, cy - 5);
+    ctx.moveTo(cx - 25, py + ph - 4);
+    ctx.lineTo(cx - 21, cy + 10);
+    ctx.lineTo(cx - 11, cy + 18);
+    ctx.lineTo(cx, cy + 13);
+    ctx.lineTo(cx + 11, cy + 18);
+    ctx.lineTo(cx + 22, cy + 10);
+    ctx.lineTo(cx + 25, py + ph - 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fff5ee';
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy + 12); ctx.lineTo(cx, cy + 19); ctx.lineTo(cx + 8, cy + 12);
+    ctx.lineTo(cx + 4, py + ph - 4); ctx.lineTo(cx - 4, py + ph - 4);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#222'; ctx.lineWidth = 2.5;
-    ctx.fillStyle = 'rgba(150, 200, 255, 0.3)';
-    ctx.beginPath(); ctx.roundRect(cx - 14, cy - 6, 12, 10, 3); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.roundRect(cx + 2, cy - 6, 12, 10, 3); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 2, cy - 1); ctx.lineTo(cx + 2, cy - 1); ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.ellipse(cx - 8, cy - 1, 3.5, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(cx + 8, cy - 1, 3.5, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2a1a0a';
-    ctx.beginPath(); ctx.arc(cx - 8, cy - 1, 1.8, 0, Math.PI * 2); ctx.arc(cx + 8, cy - 1, 1.8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(cx - 8, cy - 1, 0.9, 0, Math.PI * 2); ctx.arc(cx + 8, cy - 1, 0.9, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.8;
+    ctx.fillStyle = '#e52235';
     ctx.beginPath();
-    ctx.moveTo(cx - 14, cy - 10); ctx.lineTo(cx - 3, cy - 8);
-    ctx.moveTo(cx + 14, cy - 10); ctx.lineTo(cx + 3, cy - 8);
+    ctx.moveTo(cx, cy + 15); ctx.lineTo(cx - 3, cy + 21);
+    ctx.lineTo(cx, py + ph - 4); ctx.lineTo(cx + 3, cy + 21);
+    ctx.closePath(); ctx.fill();
+
+    // Face, ears and swept flame-like orange hair.
+    ctx.fillStyle = '#f2b477';
+    ctx.beginPath(); ctx.ellipse(cx - 15, cy - 1, 4, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 15, cy - 1, 4, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx, cy, 15, 19, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff7a18';
+    ctx.beginPath();
+    ctx.moveTo(cx - 15, cy - 8);
+    ctx.quadraticCurveTo(cx - 29, cy - 21, cx - 17, cy - 30);
+    ctx.lineTo(cx - 11, cy - 22); ctx.lineTo(cx - 4, cy - 33);
+    ctx.lineTo(cx + 1, cy - 22); ctx.lineTo(cx + 11, cy - 31);
+    ctx.lineTo(cx + 11, cy - 21); ctx.quadraticCurveTo(cx + 26, cy - 27, cx + 16, cy - 5);
+    ctx.quadraticCurveTo(cx + 4, cy - 14, cx - 15, cy - 8);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#783020'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 11, cy - 4); ctx.lineTo(cx - 3, cy - 1);
+    ctx.moveTo(cx + 11, cy - 4); ctx.lineTo(cx + 3, cy - 1);
     ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 5, cy + 10); ctx.lineTo(cx + 5, cy + 10); ctx.stroke();
-    ctx.fillStyle = '#111';
-    ctx.fillRect(cx - 20, py + ph - 20, 40, 17);
-    ctx.fillStyle = '#00ffff';
-    ctx.font = 'bold 14px Arial';
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(cx - 7, cy + 2, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 7, cy + 2, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#241719';
+    ctx.beginPath(); ctx.arc(cx - 7, cy + 2, 1.6, 0, Math.PI * 2); ctx.arc(cx + 7, cy + 2, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#64232a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 5, cy + 12); ctx.lineTo(cx + 5, cy + 12); ctx.stroke();
+
+    drawPosterSlogan(px, py, pw, ph, slogan, '#761329');
+}
+
+function drawZorakPoster(px, py, pw, ph, slogan) {
+    const cx = px + pw / 2;
+    const cy = py + 43;
+    // The bespectacled boy in a black shirt from the reference.
+    ctx.fillStyle = '#061d25';
+    ctx.fillRect(px + 2, py + 2, pw - 4, 14);
+    ctx.fillStyle = '#8cf5ff';
+    ctx.font = 'bold 8px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Z', cx, py + ph - 11);
-    ctx.fillStyle = '#00ffff';
-    ctx.font = 'bold 7px Arial';
-    ctx.fillText('TRUST!', cx, py + ph - 4);
+    ctx.fillText('ZORAK', cx, py + 9);
+
+    ctx.fillStyle = '#11151c';
+    ctx.beginPath();
+    ctx.moveTo(cx - 23, py + ph - 4); ctx.lineTo(cx - 20, cy + 13);
+    ctx.lineTo(cx - 9, cy + 9); ctx.lineTo(cx, cy + 15);
+    ctx.lineTo(cx + 9, cy + 9); ctx.lineTo(cx + 20, cy + 13);
+    ctx.lineTo(cx + 23, py + ph - 4);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#e7ad80';
+    ctx.beginPath(); ctx.ellipse(cx - 14, cy, 4, 6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 14, cy, 4, 6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx, cy, 14, 18, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#171419';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy - 5);
+    ctx.quadraticCurveTo(cx - 18, cy - 25, cx - 2, cy - 27);
+    ctx.quadraticCurveTo(cx + 13, cy - 29, cx + 17, cy - 9);
+    ctx.lineTo(cx + 12, cy - 13); ctx.lineTo(cx + 5, cy - 17);
+    ctx.lineTo(cx - 1, cy - 12); ctx.lineTo(cx - 9, cy - 15);
+    ctx.closePath(); ctx.fill();
+
+    // Thick square glasses are the defining feature of this portrait.
+    ctx.strokeStyle = '#171a20'; ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(190,225,245,.24)';
+    ctx.beginPath(); ctx.roundRect(cx - 13, cy - 4, 11, 9, 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(cx + 2, cy - 4, 11, 9, 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 2, cy); ctx.lineTo(cx + 2, cy); ctx.stroke();
+    ctx.fillStyle = '#f8f5ec';
+    ctx.beginPath(); ctx.arc(cx - 7, cy, 2, 0, Math.PI * 2); ctx.arc(cx + 7, cy, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#171419';
+    ctx.beginPath(); ctx.arc(cx - 7, cy, 1, 0, Math.PI * 2); ctx.arc(cx + 7, cy, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#4a2422'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(cx - 5, cy + 11); ctx.lineTo(cx + 5, cy + 11); ctx.stroke();
+
+    drawPosterSlogan(px, py, pw, ph, slogan, '#061d25');
+}
+
+function drawPosterSlogan(px, py, pw, ph, slogan, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(px + 2, py + ph - 20, pw - 4, 17);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let fontSize = 7;
+    ctx.font = 'bold ' + fontSize + 'px Arial';
+    while (ctx.measureText(slogan).width > pw - 7 && fontSize > 5) {
+        fontSize--;
+        ctx.font = 'bold ' + fontSize + 'px Arial';
+    }
+    ctx.fillText(slogan, px + pw / 2, py + ph - 11);
 }
 
 // ============ ZED ============
@@ -567,8 +593,8 @@ function draw() {
     pipes.forEach(pipe => {
         const bottomY = pipe.gapY + pipe.gap;
         const bottomHeight = canvas.height - bottomY;
-        drawUndergroundWall(pipe.x, 0, pipe.width, pipe.gapY, true, pipe.character, lightLevel);
-        drawUndergroundWall(pipe.x, bottomY, pipe.width, bottomHeight, false, pipe.character, lightLevel);
+        drawUndergroundWall(pipe.x, 0, pipe.width, pipe.gapY, true, pipe.character, lightLevel, pipe.slogan);
+        drawUndergroundWall(pipe.x, bottomY, pipe.width, bottomHeight, false, pipe.character, lightLevel, pipe.slogan);
     });
 
     // Coinler
@@ -659,7 +685,11 @@ function spawnPipe() {
     const maxGapY = canvas.height - PIPE_GAP - 80;
     const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
     const character = Math.random() > 0.5 ? 'krump' : 'zorak';
-    pipes.push({ x: canvas.width, width: PIPE_WIDTH, gapY, gap: PIPE_GAP, passed: false, character });
+    const slogans = character === 'krump'
+        ? ['BİZ BÜYÜĞÜZ', 'GÜÇ BİZDE', 'YENİLMEYİZ']
+        : ['ZİRVE BİZİM', 'BİZ DAHA GÜÇLÜYÜZ', 'DURDURAMAZSIN'];
+    const slogan = slogans[Math.floor(Math.random() * slogans.length)];
+    pipes.push({ x: canvas.width, width: PIPE_WIDTH, gapY, gap: PIPE_GAP, passed: false, character, slogan });
 
     // Her engel için iki coin; ikisi de geçiş boşluğunda görünür.
     for (let coinIndex = 0; coinIndex < 2; coinIndex++) {
