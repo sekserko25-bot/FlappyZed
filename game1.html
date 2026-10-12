@@ -23,6 +23,9 @@
         .buy-item { min-height:32px; cursor:pointer; pointer-events:auto; }
         #shop-feedback { min-height:18px; margin:7px 0 0; color:#71ffb1; font-size:11px; font-weight:700; }
         #shop-feedback.visible { text-shadow:0 0 8px rgba(113,255,177,.45); }
+        .magnet-choice { display:flex; align-items:center; justify-content:center; gap:4px; margin-top:5px; color:#dce4f4; font-size:8px; }
+        #magnetUseCount { width:34px; padding:3px 2px; border:1px solid #69e9f1; border-radius:5px; background:#101725; color:#fff; font-size:10px; text-align:center; }
+        .magnet-duration { display:block; margin-top:3px; color:#aab0c0; font-size:8px; }
         @media(max-width:500px) {
             #future-shop { margin:0 0 10px; }
             #future-shop h2 { font-size:11px; margin-bottom:5px; }
@@ -64,6 +67,10 @@
                         <div class="shop-icon">🧲</div><div class="shop-name">Mıknatıs</div>
                         <div class="shop-stock">Stok: <span id="magnetsStock">0</span></div>
                         <button class="buy-item" id="buyMagnets" data-kind="magnets" type="button">BUY +10</button>
+                        <label class="magnet-choice" for="magnetUseCount">Bu tur kullan:
+                            <input id="magnetUseCount" type="number" min="0" max="0" value="0" inputmode="numeric">
+                        </label>
+                        <small class="magnet-duration">Her mıknatıs 15 dk sürer.</small>
                     </article>
                 </div>
                 <p id="shop-feedback" role="status" aria-live="polite"></p>
