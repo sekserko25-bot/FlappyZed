@@ -98,15 +98,22 @@ document.addEventListener('keydown', event => {
     }
 });
 
-// Original handlers start the game before these handlers apply the selected stock.
 document.getElementById('startBtn').addEventListener('click', startPurchasedRun);
 document.getElementById('restartBtn').addEventListener('click', startPurchasedRun);
 
 const originalGameOver = window.gameOver;
 window.gameOver = function () {
+    // A live shield blocks both wall and floor impacts.
+    if (shieldActive && shieldTimer > 0) return;
+
     const livesBeforeHit = lives;
     originalGameOver();
-    if (lives < livesBeforeHit) runUsage.lives += livesBeforeHit - lives;
+    if (lives < livesBeforeHit) {
+        runUsage.lives += livesBeforeHit - lives;
+        // Respawn in the flight lane so a purchased life is not immediately spent again.
+        bird.y = canvas.height / 2 - bird.height / 2;
+        bird.velocity = JUMP_FORCE;
+    }
     if (!gameRunning) finishPurchasedRun();
     else updateShieldButton();
 };
