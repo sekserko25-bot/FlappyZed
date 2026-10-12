@@ -1,174 +1,359 @@
-// Manga-inspired Zed renderer: a young survivor with messy black/cyan hair and his worn jacket.
+// Full-body manga Zed: red visor, black/cyan hair, long crimson coat, trousers, boots and rocket pack.
 window.drawZed = function (cx, cy, rotation, fuelRatio, t) {
-    const pulse = 0.5 + Math.sin(t / 135) * 0.5;
+    const pulse = 0.5 + Math.sin(t / 120) * 0.5;
     ctx.save();
-    ctx.translate(cx, cy + Math.sin(t / 170) * 2);
-    ctx.rotate(rotation * 0.38);
+    ctx.translate(cx, cy + Math.sin(t / 170) * 1.8);
+    ctx.rotate(rotation * 0.3);
+    // Draw a little larger than the collision box so the full silhouette reads in flight.
+    ctx.scale(1.18, 1.18);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
 
-    // The handmade thruster sits behind Zed; his face and clothes stay visible.
-    const flameLength = 8 + Math.random() * 8 + fuelRatio * 15;
-    const flame = ctx.createLinearGradient(-18, 0, -18 - flameLength, 0);
-    flame.addColorStop(0, '#fff4b0');
-    flame.addColorStop(0.35, '#ffb12e');
-    flame.addColorStop(0.72, '#ff522e');
-    flame.addColorStop(1, 'rgba(255,55,30,0)');
+    // Rocket pack and exhaust behind Zed.
+    const flameLength = 10 + Math.random() * 9 + fuelRatio * 15;
+    const flame = ctx.createLinearGradient(-20, 0, -20 - flameLength, 0);
+    flame.addColorStop(0, '#fff8c2');
+    flame.addColorStop(0.22, '#ffc34d');
+    flame.addColorStop(0.65, '#ff6a27');
+    flame.addColorStop(1, 'rgba(255,55,35,0)');
     ctx.shadowBlur = 12;
-    ctx.shadowColor = '#ff663a';
+    ctx.shadowColor = '#ff5b31';
     ctx.fillStyle = flame;
     ctx.beginPath();
-    ctx.moveTo(-15, -4);
-    ctx.quadraticCurveTo(-23 - flameLength, -2, -18 - flameLength, 0);
-    ctx.quadraticCurveTo(-23 - flameLength, 3, -15, 5);
+    ctx.moveTo(-18, -4);
+    ctx.quadraticCurveTo(-26 - flameLength, -2, -21 - flameLength, 0);
+    ctx.quadraticCurveTo(-26 - flameLength, 3, -18, 5);
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // A compact, improvised rocket nozzle rather than a full space suit.
-    ctx.fillStyle = '#28333b';
-    ctx.strokeStyle = '#75818a';
+    ctx.fillStyle = '#263241';
+    ctx.strokeStyle = '#111923';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-20, -13, 12, 27, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#d43b61';
+    ctx.beginPath();
+    ctx.moveTo(-19, -10);
+    ctx.lineTo(-15, -15);
+    ctx.lineTo(-9, -12);
+    ctx.lineTo(-12, -5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#a5b1bf';
+    ctx.fillRect(-18, -2, 7, 3);
+
+    // Long coat tails stream behind the body, with cyan and magenta lining.
+    ctx.fillStyle = '#111923';
+    ctx.strokeStyle = '#cf3e70';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-7, 2);
+    ctx.quadraticCurveTo(-21, 5, -38, 16);
+    ctx.quadraticCurveTo(-34, 7, -29, 2);
+    ctx.lineTo(-39, 6);
+    ctx.quadraticCurveTo(-23, -1, -13, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#087d98';
+    ctx.beginPath();
+    ctx.moveTo(-27, 3);
+    ctx.quadraticCurveTo(-18, 1, -13, -5);
+    ctx.lineTo(-31, 12);
+    ctx.closePath();
+    ctx.fill();
+
+    // Back leg kicked back: dark fitted trousers and a heavy boot.
+    ctx.strokeStyle = '#151b27';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(-4, 7);
+    ctx.quadraticCurveTo(-11, 16, -22, 23);
+    ctx.stroke();
+    ctx.strokeStyle = '#343c4c';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-8, 11);
+    ctx.lineTo(-19, 21);
+    ctx.stroke();
+    ctx.fillStyle = '#111722';
+    ctx.strokeStyle = '#080c13';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-21, 19);
+    ctx.lineTo(-29, 24);
+    ctx.lineTo(-37, 32);
+    ctx.lineTo(-35, 37);
+    ctx.lineTo(-23, 36);
+    ctx.lineTo(-15, 28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#667180';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-35, 34);
+    ctx.lineTo(-24, 33);
+    ctx.stroke();
+    ctx.fillStyle = '#252d3a';
+    ctx.fillRect(-31, 26, 5, 4);
+
+    // Front leg bent at the knee and second boot: both legs stay visible.
+    ctx.strokeStyle = '#202735';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(2, 7);
+    ctx.quadraticCurveTo(1, 17, -9, 24);
+    ctx.lineTo(-16, 30);
+    ctx.stroke();
+    ctx.strokeStyle = '#46505f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 13);
+    ctx.lineTo(-9, 22);
+    ctx.stroke();
+    ctx.fillStyle = '#141a25';
+    ctx.strokeStyle = '#080c13';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-13, 25);
+    ctx.lineTo(-21, 30);
+    ctx.lineTo(-23, 37);
+    ctx.lineTo(-11, 38);
+    ctx.lineTo(-3, 33);
+    ctx.lineTo(-6, 27);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#78818c';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-22, 35);
+    ctx.lineTo(-11, 36);
+    ctx.stroke();
+    ctx.fillStyle = '#394351';
+    ctx.fillRect(-18, 29, 5, 4);
+
+    // Forward arm in a segmented sleeve and armored glove.
+    ctx.strokeStyle = '#202a37';
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(6, -7);
+    ctx.quadraticCurveTo(18, -12, 28, -11);
+    ctx.stroke();
+    ctx.strokeStyle = '#cf3e70';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(10, -11);
+    ctx.lineTo(17, -14);
+    ctx.stroke();
+    ctx.strokeStyle = '#3c4858';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(21, -12);
+    ctx.lineTo(28, -11);
+    ctx.stroke();
+    ctx.fillStyle = '#151c28';
+    ctx.strokeStyle = '#677385';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-17, -7);
-    ctx.lineTo(-8, -6);
-    ctx.lineTo(-8, 6);
-    ctx.lineTo(-17, 7);
-    ctx.closePath();
+    ctx.roundRect(26, -16, 12, 10, 4);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#ffb33c';
-    ctx.fillRect(-15, -2, 5, 4);
-
-    // Red scarf whipping behind him, matching the manga's dramatic palette.
-    ctx.fillStyle = '#a72536';
-    ctx.beginPath();
-    ctx.moveTo(-12, -7);
-    ctx.quadraticCurveTo(-23, -14 - pulse * 3, -34, -10 - pulse * 5);
-    ctx.lineTo(-29, -2);
-    ctx.quadraticCurveTo(-21, -5, -12, -2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#ef5864';
+    ctx.strokeStyle = '#8290a0';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(-16, -6);
-    ctx.quadraticCurveTo(-23, -9 - pulse * 2, -29, -8 - pulse * 3);
+    ctx.moveTo(29, -13);
+    ctx.lineTo(35, -13);
+    ctx.moveTo(30, -9);
+    ctx.lineTo(35, -9);
     ctx.stroke();
 
-    // Dark worn jacket and shoulder, with teal edge light.
-    const jacket = ctx.createLinearGradient(-8, -10, 15, 14);
-    jacket.addColorStop(0, '#435463');
-    jacket.addColorStop(0.5, '#202a35');
-    jacket.addColorStop(1, '#101820');
-    ctx.fillStyle = jacket;
-    ctx.strokeStyle = '#0a1119';
-    ctx.lineWidth = 2;
+    // Rear arm and clenched glove.
+    ctx.strokeStyle = '#202a37';
+    ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(-13, -7);
-    ctx.quadraticCurveTo(-5, -14, 5, -11);
-    ctx.lineTo(13, -5);
-    ctx.lineTo(12, 7);
-    ctx.quadraticCurveTo(1, 15, -11, 9);
-    ctx.lineTo(-16, 3);
-    ctx.closePath();
+    ctx.moveTo(-9, -3);
+    ctx.quadraticCurveTo(-18, 4, -21, 11);
+    ctx.stroke();
+    ctx.fillStyle = '#171e29';
+    ctx.strokeStyle = '#697587';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-26, 8, 10, 11, 4);
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = '#39c8c8';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(-10, 7);
-    ctx.quadraticCurveTo(1, 12, 10, 5);
-    ctx.stroke();
-
-    // One arm reaches forward as he fights his way upward.
-    ctx.strokeStyle = '#26333d';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(5, 5);
-    ctx.quadraticCurveTo(14, 10, 21, 8);
-    ctx.stroke();
-    ctx.fillStyle = '#d8ad91';
-    ctx.beginPath();
-    ctx.ellipse(21, 8, 4, 3, 0.15, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Neck and determined face, turned toward the way ahead.
-    ctx.fillStyle = '#c9967c';
-    ctx.fillRect(3, -10, 7, 7);
-    ctx.fillStyle = '#e0b59a';
-    ctx.strokeStyle = '#241d20';
-    ctx.lineWidth = 1.7;
-    ctx.beginPath();
-    ctx.moveTo(1, -12);
-    ctx.quadraticCurveTo(2, -23, 14, -21);
-    ctx.quadraticCurveTo(22, -18, 21, -10);
-    ctx.lineTo(17, -5);
-    ctx.quadraticCurveTo(8, -3, 3, -8);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Dark, messy hair with the unmistakable cyan streak from the story art.
-    ctx.fillStyle = '#11171e';
-    ctx.beginPath();
-    ctx.moveTo(1, -12);
-    ctx.lineTo(-2, -20);
-    ctx.lineTo(5, -18);
-    ctx.lineTo(4, -26);
-    ctx.lineTo(11, -21);
-    ctx.lineTo(15, -27);
-    ctx.lineTo(17, -20);
-    ctx.quadraticCurveTo(24, -18, 22, -11);
-    ctx.lineTo(17, -13);
-    ctx.lineTo(13, -10);
-    ctx.lineTo(8, -14);
-    ctx.lineTo(4, -10);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#25c8ce';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(6, -21);
-    ctx.lineTo(10, -17);
-    ctx.lineTo(8, -13);
-    ctx.moveTo(15, -22);
-    ctx.lineTo(17, -17);
-    ctx.stroke();
-
-    // One visible, sharp eye and a small cheek mark give him a focused expression.
-    ctx.fillStyle = '#ecf7f5';
-    ctx.beginPath();
-    ctx.moveTo(13, -13);
-    ctx.quadraticCurveTo(17, -15, 19, -12);
-    ctx.quadraticCurveTo(16, -9, 13, -11);
-    ctx.fill();
-    ctx.fillStyle = '#2ccbd3';
-    ctx.beginPath();
-    ctx.arc(16, -12, 1.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#793e43';
+    ctx.strokeStyle = '#929dad';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(17, -7);
-    ctx.lineTo(20, -8);
+    ctx.moveTo(-24, 11);
+    ctx.lineTo(-18, 11);
+    ctx.moveTo(-24, 15);
+    ctx.lineTo(-18, 15);
     ctx.stroke();
 
-    // Jacket collar and a small turquoise keepsake on his chest.
-    ctx.fillStyle = '#81919a';
+    // Torso: charcoal coat with magenta lapel, cyan piping and white shirt.
+    ctx.fillStyle = '#1a202c';
+    ctx.strokeStyle = '#0a1018';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, -9);
-    ctx.lineTo(7, -5);
-    ctx.lineTo(2, 1);
-    ctx.lineTo(-4, -5);
+    ctx.moveTo(-12, -12);
+    ctx.lineTo(-3, -17);
+    ctx.lineTo(10, -12);
+    ctx.lineTo(14, 1);
+    ctx.lineTo(8, 14);
+    ctx.lineTo(-9, 12);
+    ctx.lineTo(-16, 1);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#36d5d8';
-    ctx.shadowBlur = 7;
-    ctx.shadowColor = '#31dbe0';
+    ctx.stroke();
+    ctx.strokeStyle = '#27bfd0';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(1, 3, 2, 0, Math.PI * 2);
+    ctx.moveTo(-11, 7);
+    ctx.lineTo(-7, 12);
+    ctx.lineTo(7, 11);
+    ctx.stroke();
+
+    ctx.fillStyle = '#d8dce2';
+    ctx.beginPath();
+    ctx.moveTo(-3, -13);
+    ctx.lineTo(5, -11);
+    ctx.lineTo(3, 7);
+    ctx.lineTo(-4, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#d63f68';
+    ctx.beginPath();
+    ctx.moveTo(-1, -10);
+    ctx.lineTo(3, -10);
+    ctx.lineTo(5, 3);
+    ctx.lineTo(2, 8);
+    ctx.lineTo(-1, 3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Raised coat collar and bright magenta inner panels.
+    ctx.fillStyle = '#b8325b';
+    ctx.strokeStyle = '#e3577b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-12, -12);
+    ctx.lineTo(-6, -18);
+    ctx.lineTo(-2, -9);
+    ctx.lineTo(-7, -4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#b8325b';
+    ctx.beginPath();
+    ctx.moveTo(4, -15);
+    ctx.lineTo(12, -12);
+    ctx.lineTo(8, -4);
+    ctx.lineTo(2, -9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Belt at the waist.
+    ctx.strokeStyle = '#080d15';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-9, 10);
+    ctx.lineTo(8, 9);
+    ctx.stroke();
+    ctx.strokeStyle = '#9aa4b0';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-2, 8, 4, 4);
+
+    // Neck and face in profile, looking toward the path ahead.
+    ctx.fillStyle = '#c99579';
+    ctx.fillRect(1, -22, 8, 8);
+    ctx.fillStyle = '#e3b697';
+    ctx.strokeStyle = '#25202a';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-1, -24);
+    ctx.quadraticCurveTo(0, -36, 13, -35);
+    ctx.quadraticCurveTo(22, -33, 22, -25);
+    ctx.lineTo(27, -21);
+    ctx.lineTo(22, -18);
+    ctx.quadraticCurveTo(20, -11, 12, -12);
+    ctx.lineTo(4, -15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Thick, tousled black hair with vivid cyan and pink streaks.
+    ctx.fillStyle = '#10141d';
+    ctx.beginPath();
+    ctx.moveTo(-2, -23);
+    ctx.lineTo(-8, -31);
+    ctx.lineTo(0, -29);
+    ctx.lineTo(-2, -38);
+    ctx.lineTo(6, -33);
+    ctx.lineTo(10, -41);
+    ctx.lineTo(14, -34);
+    ctx.lineTo(22, -37);
+    ctx.lineTo(19, -30);
+    ctx.lineTo(25, -27);
+    ctx.lineTo(19, -23);
+    ctx.lineTo(13, -26);
+    ctx.lineTo(8, -22);
+    ctx.lineTo(3, -25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#27d5e2';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(12, -36);
+    ctx.lineTo(17, -31);
+    ctx.lineTo(14, -26);
+    ctx.moveTo(20, -33);
+    ctx.lineTo(23, -29);
+    ctx.stroke();
+    ctx.strokeStyle = '#d94b77';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(0, -35);
+    ctx.lineTo(5, -32);
+    ctx.stroke();
+
+    // Red wraparound visor glasses like the supplied character reference.
+    ctx.fillStyle = '#252a35';
+    ctx.strokeStyle = '#10151e';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.roundRect(8, -28, 18, 7, 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f02f52';
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#ff3159';
+    ctx.beginPath();
+    ctx.roundRect(13, -27, 11, 5, 1.5);
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#ff8994';
+    ctx.lineWidth = .8;
+    ctx.beginPath();
+    ctx.moveTo(15, -26);
+    ctx.lineTo(22, -26);
+    ctx.stroke();
+
+    // Small ear and cheek detail visible behind the visor.
+    ctx.fillStyle = '#d6a184';
+    ctx.beginPath();
+    ctx.arc(5, -23, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#a56d61';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(5, -23, 1.4, -.8, 1.2);
+    ctx.stroke();
 
     if (shieldActive) {
         ctx.strokeStyle = 'rgba(78, 241, 255, 0.9)';
@@ -176,7 +361,7 @@ window.drawZed = function (cx, cy, rotation, fuelRatio, t) {
         ctx.shadowBlur = 18;
         ctx.shadowColor = '#00eaff';
         ctx.beginPath();
-        ctx.ellipse(0, 0, 35, 28, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, -1, 45, 41, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
     }
