@@ -1,128 +1,172 @@
-// Zed's upgraded hero renderer. Loaded after game1.js to replace its placeholder sprite.
+// Manga-inspired Zed renderer: a young survivor with messy black/cyan hair and his worn jacket.
 window.drawZed = function (cx, cy, rotation, fuelRatio, t) {
-    const pulse = 0.5 + Math.sin(t / 140) * 0.5;
+    const pulse = 0.5 + Math.sin(t / 135) * 0.5;
     ctx.save();
-    ctx.translate(cx, cy + Math.sin(t / 180) * 2);
-    ctx.rotate(rotation * 0.45);
+    ctx.translate(cx, cy + Math.sin(t / 170) * 2);
+    ctx.rotate(rotation * 0.38);
 
-    // Cyan exhaust trail and hot orange core.
-    const flameLength = 12 + Math.random() * 9 + fuelRatio * 16;
+    // The handmade thruster sits behind Zed; his face and clothes stay visible.
+    const flameLength = 8 + Math.random() * 8 + fuelRatio * 15;
     const flame = ctx.createLinearGradient(-18, 0, -18 - flameLength, 0);
-    flame.addColorStop(0, '#fff7a8');
-    flame.addColorStop(0.28, '#ffb52e');
-    flame.addColorStop(0.7, '#ff4d22');
-    flame.addColorStop(1, 'rgba(255,50,20,0)');
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = '#ff6b2d';
+    flame.addColorStop(0, '#fff4b0');
+    flame.addColorStop(0.35, '#ffb12e');
+    flame.addColorStop(0.72, '#ff522e');
+    flame.addColorStop(1, 'rgba(255,55,30,0)');
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#ff663a';
     ctx.fillStyle = flame;
     ctx.beginPath();
-    ctx.moveTo(-17, -7);
-    ctx.quadraticCurveTo(-25 - flameLength, -4, -20 - flameLength, 0);
-    ctx.quadraticCurveTo(-25 - flameLength, 5, -17, 7);
+    ctx.moveTo(-15, -4);
+    ctx.quadraticCurveTo(-23 - flameLength, -2, -18 - flameLength, 0);
+    ctx.quadraticCurveTo(-23 - flameLength, 3, -15, 5);
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Rocket pack.
-    ctx.fillStyle = '#172b45';
-    ctx.strokeStyle = '#58e8ff';
-    ctx.lineWidth = 2;
+    // A compact, improvised rocket nozzle rather than a full space suit.
+    ctx.fillStyle = '#28333b';
+    ctx.strokeStyle = '#75818a';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(-25, -13, 14, 26, 5);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#ffb52e';
-    ctx.fillRect(-23, -5, 10, 3);
-    ctx.fillRect(-23, 3, 10, 3);
-
-    // Scarf streaming behind the hero.
-    ctx.fillStyle = '#f04455';
-    ctx.beginPath();
-    ctx.moveTo(-12, -8);
-    ctx.quadraticCurveTo(-25, -15 + pulse * 3, -35, -11 + pulse * 5);
-    ctx.lineTo(-29, -3);
-    ctx.quadraticCurveTo(-22, -6, -12, -3);
+    ctx.moveTo(-17, -7);
+    ctx.lineTo(-8, -6);
+    ctx.lineTo(-8, 6);
+    ctx.lineTo(-17, 7);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ffb33c';
+    ctx.fillRect(-15, -2, 5, 4);
 
-    // Compact flight suit silhouette.
-    const suit = ctx.createLinearGradient(-4, -19, 12, 18);
-    suit.addColorStop(0, '#e8f7ff');
-    suit.addColorStop(0.5, '#82b9d2');
-    suit.addColorStop(1, '#426b89');
-    ctx.fillStyle = suit;
-    ctx.strokeStyle = '#13263c';
-    ctx.lineWidth = 2.5;
+    // Red scarf whipping behind him, matching the manga's dramatic palette.
+    ctx.fillStyle = '#a72536';
     ctx.beginPath();
-    ctx.moveTo(-13, -9);
-    ctx.quadraticCurveTo(-7, -19, 5, -16);
-    ctx.lineTo(12, -8);
-    ctx.lineTo(13, 9);
-    ctx.quadraticCurveTo(2, 17, -11, 10);
+    ctx.moveTo(-12, -7);
+    ctx.quadraticCurveTo(-23, -14 - pulse * 3, -34, -10 - pulse * 5);
+    ctx.lineTo(-29, -2);
+    ctx.quadraticCurveTo(-21, -5, -12, -2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ef5864';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-16, -6);
+    ctx.quadraticCurveTo(-23, -9 - pulse * 2, -29, -8 - pulse * 3);
+    ctx.stroke();
+
+    // Dark worn jacket and shoulder, with teal edge light.
+    const jacket = ctx.createLinearGradient(-8, -10, 15, 14);
+    jacket.addColorStop(0, '#435463');
+    jacket.addColorStop(0.5, '#202a35');
+    jacket.addColorStop(1, '#101820');
+    ctx.fillStyle = jacket;
+    ctx.strokeStyle = '#0a1119';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-13, -7);
+    ctx.quadraticCurveTo(-5, -14, 5, -11);
+    ctx.lineTo(13, -5);
+    ctx.lineTo(12, 7);
+    ctx.quadraticCurveTo(1, 15, -11, 9);
     ctx.lineTo(-16, 3);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-
-    // Shoulder armor and chest emblem.
-    ctx.fillStyle = '#ffb52e';
+    ctx.strokeStyle = '#39c8c8';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.ellipse(-5, -10, 6, 4, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#09243b';
-    ctx.beginPath();
-    ctx.arc(2, 1, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#57f1ff';
-    ctx.lineWidth = 1.5;
+    ctx.moveTo(-10, 7);
+    ctx.quadraticCurveTo(1, 12, 10, 5);
     ctx.stroke();
-    ctx.fillStyle = '#ffe071';
-    ctx.font = 'bold 9px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Z', 2, 1);
 
-    // Helmet with a sharp glass visor.
-    ctx.fillStyle = '#d9f5ff';
-    ctx.strokeStyle = '#16334d';
-    ctx.lineWidth = 2.5;
+    // One arm reaches forward as he fights his way upward.
+    ctx.strokeStyle = '#26333d';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.ellipse(8, -5, 15, 14, 0.12, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(5, 5);
+    ctx.quadraticCurveTo(14, 10, 21, 8);
     ctx.stroke();
-    ctx.fillStyle = '#10283e';
+    ctx.fillStyle = '#d8ad91';
     ctx.beginPath();
-    ctx.ellipse(13, -6, 9, 8, 0.1, -1.2, 1.55);
-    ctx.lineTo(7, 1);
-    ctx.quadraticCurveTo(3, -4, 5, -9);
+    ctx.ellipse(21, 8, 4, 3, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Neck and determined face, turned toward the way ahead.
+    ctx.fillStyle = '#c9967c';
+    ctx.fillRect(3, -10, 7, 7);
+    ctx.fillStyle = '#e0b59a';
+    ctx.strokeStyle = '#241d20';
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.moveTo(1, -12);
+    ctx.quadraticCurveTo(2, -23, 14, -21);
+    ctx.quadraticCurveTo(22, -18, 21, -10);
+    ctx.lineTo(17, -5);
+    ctx.quadraticCurveTo(8, -3, 3, -8);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#68edff';
-    ctx.globalAlpha = 0.85;
+    ctx.stroke();
+
+    // Dark, messy hair with the unmistakable cyan streak from the story art.
+    ctx.fillStyle = '#11171e';
     ctx.beginPath();
-    ctx.moveTo(9, -11);
-    ctx.lineTo(16, -10);
-    ctx.lineTo(11, -4);
+    ctx.moveTo(1, -12);
+    ctx.lineTo(-2, -20);
+    ctx.lineTo(5, -18);
+    ctx.lineTo(4, -26);
+    ctx.lineTo(11, -21);
+    ctx.lineTo(15, -27);
+    ctx.lineTo(17, -20);
+    ctx.quadraticCurveTo(24, -18, 22, -11);
+    ctx.lineTo(17, -13);
+    ctx.lineTo(13, -10);
+    ctx.lineTo(8, -14);
+    ctx.lineTo(4, -10);
     ctx.closePath();
     ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Small top antenna and cyan running lights.
-    ctx.strokeStyle = '#ffb52e';
+    ctx.strokeStyle = '#25c8ce';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(7, -18);
-    ctx.lineTo(10, -23);
+    ctx.moveTo(6, -21);
+    ctx.lineTo(10, -17);
+    ctx.lineTo(8, -13);
+    ctx.moveTo(15, -22);
+    ctx.lineTo(17, -17);
     ctx.stroke();
-    ctx.fillStyle = '#ffdf71';
+
+    // One visible, sharp eye and a small cheek mark give him a focused expression.
+    ctx.fillStyle = '#ecf7f5';
     ctx.beginPath();
-    ctx.arc(10, -23, 2, 0, Math.PI * 2);
+    ctx.moveTo(13, -13);
+    ctx.quadraticCurveTo(17, -15, 19, -12);
+    ctx.quadraticCurveTo(16, -9, 13, -11);
     ctx.fill();
-    ctx.shadowBlur = 9;
-    ctx.shadowColor = '#55eeff';
-    ctx.fillStyle = '#55eeff';
+    ctx.fillStyle = '#2ccbd3';
     ctx.beginPath();
-    ctx.arc(-8, 5, 1.8, 0, Math.PI * 2);
+    ctx.arc(16, -12, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#793e43';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(17, -7);
+    ctx.lineTo(20, -8);
+    ctx.stroke();
+
+    // Jacket collar and a small turquoise keepsake on his chest.
+    ctx.fillStyle = '#81919a';
+    ctx.beginPath();
+    ctx.moveTo(0, -9);
+    ctx.lineTo(7, -5);
+    ctx.lineTo(2, 1);
+    ctx.lineTo(-4, -5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#36d5d8';
+    ctx.shadowBlur = 7;
+    ctx.shadowColor = '#31dbe0';
+    ctx.beginPath();
+    ctx.arc(1, 3, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
@@ -132,7 +176,7 @@ window.drawZed = function (cx, cy, rotation, fuelRatio, t) {
         ctx.shadowBlur = 18;
         ctx.shadowColor = '#00eaff';
         ctx.beginPath();
-        ctx.ellipse(0, 0, 34, 27, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 35, 28, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
     }
