@@ -135,7 +135,19 @@ function update(dt, timestamp) {
     // Borular
     for (let i = pipes.length - 1; i >= 0; i--) {
         pipes[i].x -= currentSpeed * dt;
-        if (!shieldActive && checkCollision(bird, pipes[i])) { gameOver(); return; }
+        if (checkCollision(bird, pipes[i])) {
+            if (!shieldActive) { gameOver(); return; }
+
+            // Shield absorbs the hit, but keeps Zed inside the open passage.
+            const passageBottom = pipes[i].gapY + pipes[i].gap;
+            if (bird.y < pipes[i].gapY) {
+                bird.y = pipes[i].gapY;
+                bird.velocity = Math.max(2, Math.abs(bird.velocity));
+            } else if (bird.y + bird.height > passageBottom) {
+                bird.y = passageBottom - bird.height;
+                bird.velocity = -Math.max(2, Math.abs(bird.velocity));
+            }
+        }
         if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
             pipes[i].passed = true;
             obstaclesPassed++;
