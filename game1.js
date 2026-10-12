@@ -21,7 +21,7 @@ const BIRD_HEIGHT = 50;
 const BASE_SPEED = 3.3;
 const SPEED_INCREMENT = 0.5;
 const MAX_SPEED_LEVEL = 7;
-const SCORE_PER_LEVEL = 20;
+const OBSTACLES_PER_SPEED_LEVEL = 30;
 
 // ============ COIN TİPLERİ (Puan değerleri) ============
 const COIN_TYPES = [
@@ -94,22 +94,13 @@ function startGame() {
 }
 
 function updateSpeed() {
-    const newLevel = Math.min(Math.floor(obstaclesPassed / SCORE_PER_LEVEL), MAX_SPEED_LEVEL);
+    const newLevel = Math.min(Math.floor(obstaclesPassed / OBSTACLES_PER_SPEED_LEVEL), MAX_SPEED_LEVEL);
     if (newLevel > speedLevel) {
         speedLevel = newLevel;
         currentSpeed = BASE_SPEED + (speedLevel * SPEED_INCREMENT);
-        showSpeedUpMessage();
     }
 }
 
-function showSpeedUpMessage() {
-    const msg = document.getElementById('speed-message');
-    if (msg) {
-        msg.textContent = '⚡ DRONES INCOMING! Lv ' + speedLevel;
-        msg.classList.remove('hidden');
-        setTimeout(() => msg.classList.add('hidden'), 1200);
-    }
-}
 
 function gameLoop(timestamp) {
     if (!gameRunning) return;
