@@ -11,7 +11,6 @@ let fuel;
 
 const COIN_COLOR = '#00ffff';
 
-// ============ PHYSICS ============
 const GRAVITY = 0.45;
 const JUMP_FORCE = -8.5;
 const MAX_FALL_SPEED = 10;
@@ -21,7 +20,6 @@ const PIPE_SPAWN_INTERVAL = 1900;
 const BIRD_WIDTH = 38;
 const BIRD_HEIGHT = 42;
 
-// ============ SPEED ============
 const BASE_SPEED = 3.3;
 const SPEED_INCREMENT = 0.5;
 const MAX_SPEED_LEVEL = 7;
@@ -76,7 +74,7 @@ function updateSpeed() {
 function showSpeedUpMessage() {
     const msg = document.getElementById('speed-message');
     if (msg) {
-        msg.textContent = '⚡ DRONES INCOMING! Level ' + speedLevel;
+        msg.textContent = '⚡ DRONES INCOMING! Lv ' + speedLevel;
         msg.classList.remove('hidden');
         setTimeout(() => msg.classList.add('hidden'), 1200);
     }
@@ -166,7 +164,7 @@ function checkCoinCollision(bird, coin) {
     return Math.sqrt(dx * dx + dy * dy) < (bird.width / 2) + coin.radius;
 }
 
-// ============ UNDERGROUND WALL + POSTER ============
+// ============ WALL ============
 function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
     ctx.save();
     
@@ -192,12 +190,8 @@ function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
     
     ctx.fillStyle = '#555';
     for (let i = 0; i < 4; i++) {
-        ctx.beginPath();
-        ctx.arc(x + 8, y + 20 + i * 40, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + w - 8, y + 20 + i * 40, 3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 8, y + 20 + i * 40, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + w - 8, y + 20 + i * 40, 3, 0, Math.PI * 2); ctx.fill();
     }
     
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -205,23 +199,27 @@ function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.fillRect(x, y, 4, h);
     
-    const posterH = 70;
-    const posterW = w - 20;
-    const posterX = x + 10;
+    const posterH = 90;
+    const posterW = w - 16;
+    const posterX = x + 8;
     let posterY;
     
     if (isTop) posterY = y + h - posterH - 15;
     else posterY = y + 15;
     
-    if (h > 100) {
+    if (h > 120) {
         ctx.globalAlpha = Math.max(0, 1 - lightLevel * 1.5);
         
+        // Poster background (paper)
         ctx.fillStyle = '#d4c5a0';
         ctx.fillRect(posterX, posterY, posterW, posterH);
         
+        // Torn edges
         ctx.fillStyle = '#a89670';
         ctx.fillRect(posterX, posterY, posterW, 3);
         ctx.fillRect(posterX, posterY + posterH - 3, posterW, 3);
+        ctx.fillRect(posterX, posterY, 3, posterH);
+        ctx.fillRect(posterX + posterW - 3, posterY, 3, posterH);
         
         if (character === 'krump') {
             drawKrumpPoster(posterX, posterY, posterW, posterH);
@@ -235,198 +233,339 @@ function drawUndergroundWall(x, y, w, h, isTop, character, lightLevel) {
     ctx.restore();
 }
 
+// ============ KRUMP POSTER (Gerçekçi) ============
 function drawKrumpPoster(px, py, pw, ph) {
     const cx = px + pw / 2;
-    const cy = py + ph / 2 - 5;
+    const cy = py + ph / 2 + 8;
     
+    // Top red band
     ctx.fillStyle = '#8b0000';
-    ctx.fillRect(px + 3, py + 3, pw - 6, 14);
+    ctx.fillRect(px + 2, py + 2, pw - 4, 14);
     
     ctx.fillStyle = '#ffcc00';
     ctx.font = 'bold 10px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('KRUMP', cx, py + 10);
+    ctx.fillText('KRUMP', cx, py + 9);
     
-    ctx.fillStyle = '#ffb366';
-    ctx.beginPath(); ctx.arc(cx, cy + 5, 14, 0, Math.PI * 2); ctx.fill();
+    // Face base
+    ctx.fillStyle = '#f5c99b';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 20, 19, 0, 0, Math.PI * 2);
+    ctx.fill();
     
+    // Chubby cheeks
+    ctx.fillStyle = '#f0b880';
+    ctx.beginPath();
+    ctx.ellipse(cx - 13, cy + 6, 7, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 13, cy + 6, 7, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Wild orange hair
     ctx.fillStyle = '#ff6600';
     ctx.beginPath();
-    ctx.moveTo(cx - 14, cy - 5); ctx.lineTo(cx - 10, cy - 18); ctx.lineTo(cx - 4, cy - 8);
-    ctx.lineTo(cx, cy - 20); ctx.lineTo(cx + 5, cy - 8); ctx.lineTo(cx + 12, cy - 18);
-    ctx.lineTo(cx + 14, cy - 5); ctx.closePath(); ctx.fill();
+    ctx.moveTo(cx - 20, cy - 6);
+    ctx.quadraticCurveTo(cx - 24, cy - 26, cx - 13, cy - 28);
+    ctx.lineTo(cx - 9, cy - 21);
+    ctx.lineTo(cx - 3, cy - 30);
+    ctx.lineTo(cx + 2, cy - 21);
+    ctx.lineTo(cx + 8, cy - 30);
+    ctx.lineTo(cx + 13, cy - 21);
+    ctx.quadraticCurveTo(cx + 24, cy - 26, cx + 20, cy - 6);
+    ctx.quadraticCurveTo(cx + 10, cy - 15, cx, cy - 13);
+    ctx.quadraticCurveTo(cx - 10, cy - 15, cx - 20, cy - 6);
+    ctx.closePath();
+    ctx.fill();
     
-    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2;
+    // Angry eyebrows
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(cx - 10, cy + 1); ctx.lineTo(cx - 3, cy + 4);
-    ctx.moveTo(cx + 10, cy + 1); ctx.lineTo(cx + 3, cy + 4);
+    ctx.moveTo(cx - 13, cy - 5);
+    ctx.lineTo(cx - 4, cy - 1);
+    ctx.moveTo(cx + 13, cy - 5);
+    ctx.lineTo(cx + 4, cy - 1);
     ctx.stroke();
     
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(cx - 8, cy + 2, 4.5, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 8, cy + 2, 4.5, 4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(cx - 8, cy + 2, 2, 0, Math.PI * 2); ctx.arc(cx + 8, cy + 2, 2, 0, Math.PI * 2); ctx.fill();
+    
+    // Nose
+    ctx.fillStyle = '#e0a070';
+    ctx.beginPath(); ctx.ellipse(cx, cy + 7, 3, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+    
+    // Frown
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.arc(cx - 5, cy + 6, 2, 0, Math.PI * 2);
-    ctx.arc(cx + 5, cy + 6, 2, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 14, 5, Math.PI + 0.3, -0.3);
+    ctx.stroke();
+    
+    // Pink suit shoulders
+    ctx.fillStyle = '#ff69b4';
+    ctx.fillRect(cx - 22, py + ph - 20, 44, 17);
+    
+    // White shirt
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx - 6, py + ph - 20, 12, 17);
+    
+    // Red tie
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.moveTo(cx, py + ph - 20);
+    ctx.lineTo(cx - 4, py + ph - 11);
+    ctx.lineTo(cx, py + ph - 1);
+    ctx.lineTo(cx + 4, py + ph - 11);
+    ctx.closePath();
     ctx.fill();
     
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(cx, cy + 14, 4, 0, Math.PI); ctx.stroke();
-    
+    // Bottom text
     ctx.fillStyle = '#8b0000';
     ctx.font = 'bold 7px Arial';
-    ctx.fillText('VOTE FOR HIM!', cx, py + ph - 6);
+    ctx.textAlign = 'center';
+    ctx.fillText('VOTE!', cx, py + ph - 4);
 }
 
+// ============ ZORAK CREED POSTER (Gerçekçi) ============
 function drawZorakPoster(px, py, pw, ph) {
     const cx = px + pw / 2;
-    const cy = py + ph / 2 - 5;
+    const cy = py + ph / 2 + 8;
     
+    // Top black band
     ctx.fillStyle = '#000';
-    ctx.fillRect(px + 3, py + 3, pw - 6, 14);
+    ctx.fillRect(px + 2, py + 2, pw - 4, 14);
     
     ctx.fillStyle = '#00ffff';
-    ctx.font = 'bold 9px Arial';
+    ctx.font = 'bold 8px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('ZORAK CREED', cx, py + 10);
+    ctx.fillText('ZORAK CREED', cx, py + 9);
     
+    // Face base
     ctx.fillStyle = '#f5c99b';
-    ctx.beginPath(); ctx.arc(cx, cy + 5, 14, 0, Math.PI * 2); ctx.fill();
-    
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(cx, cy - 2, 14, Math.PI, 0); ctx.fill();
-    
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.beginPath(); ctx.arc(cx - 5, cy + 5, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx + 5, cy + 5, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 1, cy + 5); ctx.lineTo(cx + 1, cy + 5); ctx.stroke();
-    
-    ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.arc(cx - 5, cy + 5, 1.5, 0, Math.PI * 2);
-    ctx.arc(cx + 5, cy + 5, 1.5, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, 16, 19, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(cx - 4, cy + 14); ctx.lineTo(cx + 4, cy + 14); ctx.stroke();
+    // Short black hair
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, cy - 5);
+    ctx.quadraticCurveTo(cx - 18, cy - 22, cx, cy - 24);
+    ctx.quadraticCurveTo(cx + 18, cy - 22, cx + 16, cy - 5);
+    ctx.quadraticCurveTo(cx + 11, cy - 12, cx, cy - 11);
+    ctx.quadraticCurveTo(cx - 11, cy - 12, cx - 16, cy - 5);
+    ctx.closePath();
+    ctx.fill();
     
+    // Thick glasses
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(150, 200, 255, 0.3)';
+    ctx.beginPath(); ctx.roundRect(cx - 14, cy - 6, 12, 10, 3); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(cx + 2, cy - 6, 12, 10, 3); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 2, cy - 1); ctx.lineTo(cx + 2, cy - 1); ctx.stroke();
+    
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(cx - 8, cy - 1, 3.5, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 8, cy - 1, 3.5, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2a1a0a';
+    ctx.beginPath(); ctx.arc(cx - 8, cy - 1, 1.8, 0, Math.PI * 2); ctx.arc(cx + 8, cy - 1, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(cx - 8, cy - 1, 0.9, 0, Math.PI * 2); ctx.arc(cx + 8, cy - 1, 0.9, 0, Math.PI * 2); ctx.fill();
+    
+    // Eyebrows
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy - 10);
+    ctx.lineTo(cx - 3, cy - 8);
+    ctx.moveTo(cx + 14, cy - 10);
+    ctx.lineTo(cx + 3, cy - 8);
+    ctx.stroke();
+    
+    // Straight mouth
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 10);
+    ctx.lineTo(cx + 5, cy + 10);
+    ctx.stroke();
+    
+    // Black t-shirt
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx - 20, py + ph - 20, 40, 17);
+    
+    // Cyan Z logo
+    ctx.fillStyle = '#00ffff';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Z', cx, py + ph - 11);
+    
+    // Bottom text
     ctx.fillStyle = '#00ffff';
     ctx.font = 'bold 7px Arial';
-    ctx.fillText('TRUST HIM!', cx, py + ph - 6);
+    ctx.fillText('TRUST!', cx, py + ph - 4);
 }
 
-// ============ ZED DRAWING ============
+// ============ ZED (Karizma Kahraman) ============
 function drawZed(cx, cy, rotation, fuelRatio) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(rotation);
 
-    // Rocket
-    ctx.fillStyle = '#555';
-    ctx.fillRect(-26, -6, 22, 12);
-    ctx.fillStyle = '#999';
+    // Rocket body
+    ctx.fillStyle = '#4a4a4a';
     ctx.beginPath();
-    ctx.moveTo(-26, -6); ctx.lineTo(-33, 0); ctx.lineTo(-26, 6);
+    ctx.roundRect(-28, -7, 24, 14, 4);
+    ctx.fill();
+    ctx.fillStyle = '#8a8a8a';
+    ctx.beginPath();
+    ctx.moveTo(-28, -7); ctx.lineTo(-35, 0); ctx.lineTo(-28, 7);
     ctx.closePath(); ctx.fill();
     
+    // Cyan fins
     ctx.fillStyle = '#00ffff';
     ctx.beginPath();
-    ctx.moveTo(-10, -6); ctx.lineTo(-6, -13); ctx.lineTo(-8, -6); ctx.closePath(); ctx.fill();
+    ctx.moveTo(-12, -7); ctx.lineTo(-7, -14); ctx.lineTo(-9, -7); ctx.closePath(); ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(-10, 6); ctx.lineTo(-6, 13); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill();
+    ctx.moveTo(-12, 7); ctx.lineTo(-7, 14); ctx.lineTo(-9, 7); ctx.closePath(); ctx.fill();
     
+    // Flame
     if (fuelRatio > 0.1) {
-        const flameLength = (12 + Math.random() * 10) * fuelRatio;
-        const fg = ctx.createLinearGradient(-26, 0, -26 - flameLength, 0);
+        const flameLen = (14 + Math.random() * 10) * fuelRatio;
+        const fg = ctx.createLinearGradient(-28, 0, -28 - flameLen, 0);
         fg.addColorStop(0, '#ffffff');
-        fg.addColorStop(0.3, '#ffcc00');
+        fg.addColorStop(0.3, '#ffdd00');
         fg.addColorStop(0.6, '#ff6600');
-        fg.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        fg.addColorStop(1, 'rgba(255,0,0,0)');
         ctx.fillStyle = fg;
         ctx.beginPath();
-        ctx.moveTo(-26, -5);
-        ctx.lineTo(-26 - flameLength, 0);
-        ctx.lineTo(-26, 5);
+        ctx.moveTo(-28, -6);
+        ctx.lineTo(-28 - flameLen, 0);
+        ctx.lineTo(-28, 6);
         ctx.closePath();
         ctx.fill();
     } else {
         ctx.fillStyle = 'rgba(255, 100, 0, ' + Math.random() + ')';
         ctx.beginPath();
-        ctx.arc(-28, 0, 3, 0, Math.PI * 2);
+        ctx.arc(-30, 0, 3, 0, Math.PI * 2);
         ctx.fill();
     }
 
     // Legs
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(-4, 12, 6, 12);
-    ctx.fillRect(4, 12, 6, 12);
+    ctx.beginPath(); ctx.roundRect(-6, 12, 7, 14, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(1, 12, 7, 14, 2); ctx.fill();
     ctx.fillStyle = '#000';
-    ctx.fillRect(-5, 22, 8, 4);
-    ctx.fillRect(3, 22, 8, 4);
+    ctx.beginPath(); ctx.roundRect(-7, 23, 9, 5, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(0, 23, 9, 5, 2); ctx.fill();
     
     // Coat
     ctx.fillStyle = '#0a0a0a';
-    ctx.beginPath();
-    ctx.roundRect(-12, -10, 26, 26, 4);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(-13, -10, 28, 24, 5); ctx.fill();
     
-    // Lining
+    // Cyan/magenta lining
     ctx.fillStyle = '#00ffff';
-    ctx.fillRect(-12, -10, 3, 26);
+    ctx.beginPath(); ctx.roundRect(-13, -10, 4, 24, 2); ctx.fill();
     ctx.fillStyle = '#ff00ff';
-    ctx.fillRect(-9, -10, 2, 26);
+    ctx.beginPath(); ctx.roundRect(-9, -10, 3, 24, 2); ctx.fill();
     
-    // Shirt
+    // White shirt
     ctx.fillStyle = '#fff';
-    ctx.fillRect(-2, -8, 6, 16);
+    ctx.fillRect(-2, -8, 6, 18);
     
-    // Tie
+    // Red tie
     ctx.fillStyle = '#ff0000';
     ctx.beginPath();
-    ctx.moveTo(0, -8); ctx.lineTo(-3, -2); ctx.lineTo(0, 10); ctx.lineTo(3, -2);
+    ctx.moveTo(0, -8); ctx.lineTo(-3, -3); ctx.lineTo(0, 10); ctx.lineTo(3, -3);
     ctx.closePath(); ctx.fill();
     
     // Arms
     ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(-16, -8, 6, 16);
-    ctx.fillStyle = '#666';
-    ctx.fillRect(10, -8, 6, 16);
+    ctx.beginPath(); ctx.roundRect(-18, -8, 6, 16, 3); ctx.fill();
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.roundRect(12, -8, 6, 16, 3); ctx.fill();
     ctx.fillStyle = '#00ffff';
-    ctx.fillRect(11, -6, 4, 2); ctx.fillRect(11, -2, 4, 2);
-    ctx.fillRect(11, 2, 4, 2); ctx.fillRect(11, 6, 4, 2);
+    ctx.fillRect(13, -5, 4, 1.5);
+    ctx.fillRect(13, -1, 4, 1.5);
+    ctx.fillRect(13, 3, 4, 1.5);
+    ctx.fillRect(13, 7, 4, 1.5);
     
     // Head
     ctx.fillStyle = '#f5c99b';
-    ctx.beginPath(); ctx.arc(0, -18, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, -22, 11, 13, 0, 0, Math.PI * 2); ctx.fill();
     
-    // Hair
+    // Anime hair
     ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(0, -22, 11, Math.PI, 0); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-11, -22);
+    ctx.quadraticCurveTo(-13, -32, -8, -36);
+    ctx.lineTo(-7, -31);
+    ctx.lineTo(-4, -35);
+    ctx.lineTo(-2, -30);
+    ctx.lineTo(1, -36);
+    ctx.lineTo(3, -30);
+    ctx.lineTo(7, -34);
+    ctx.lineTo(8, -29);
+    ctx.quadraticCurveTo(13, -30, 11, -22);
+    ctx.quadraticCurveTo(9, -17, 0, -17);
+    ctx.quadraticCurveTo(-9, -17, -11, -22);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Cyan hair streak
     ctx.fillStyle = '#00ffff';
     ctx.beginPath();
-    ctx.moveTo(-8, -24); ctx.lineTo(-12, -32); ctx.lineTo(-6, -26);
+    ctx.moveTo(-7, -31); ctx.lineTo(-8, -42); ctx.lineTo(-4, -33);
     ctx.closePath(); ctx.fill();
     
     // Cyber visor
-    ctx.fillStyle = '#333';
-    ctx.fillRect(-9, -20, 8, 5);
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.roundRect(-10, -25, 8, 5, 2); ctx.fill();
     ctx.fillStyle = fuelRatio > 0.1 ? '#ff0000' : '#666';
-    ctx.fillRect(-8, -19, 6, 3);
+    ctx.beginPath(); ctx.roundRect(-9, -24, 6, 3, 1); ctx.fill();
+    ctx.fillStyle = fuelRatio > 0.1 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(100, 100, 100, 0.3)';
+    ctx.beginPath(); ctx.arc(-6, -22.5, 5, 0, Math.PI * 2); ctx.fill();
     
-    // Eye
+    // Right eye (anime)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(4, -22, 2.5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a4a8a';
+    ctx.beginPath(); ctx.arc(4.5, -22, 1.8, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(5, -18, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(4.5, -22, 0.8, 0, Math.PI * 2); ctx.fill();
+    
+    // Eyebrow
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(1, -27); ctx.lineTo(8, -26);
+    ctx.stroke();
     
     // Mouth
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(-2, -13); ctx.lineTo(4, -13); ctx.stroke();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-2, -16); ctx.lineTo(4, -16);
+    ctx.stroke();
     
     // USB necklace
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.arc(0, -10, 6, 0, Math.PI); ctx.stroke();
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(-2, -7, 4, 3);
+    ctx.beginPath(); ctx.roundRect(-2, -6, 4, 3, 1); ctx.fill();
     ctx.fillStyle = '#ffcc00';
-    ctx.fillRect(-1, -6, 2, 1);
+    ctx.fillRect(-1, -5.5, 2, 1);
     
     ctx.restore();
 }
@@ -557,7 +696,6 @@ function draw() {
     const fuelRatio = fuel / WIN_SCORE;
     drawZed(bird.x + bird.width / 2, bird.y + bird.height / 2, bird.rotation, fuelRatio);
 
-    // HUD
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 26px Arial';
     ctx.textAlign = 'left';
@@ -631,7 +769,7 @@ document.getElementById('restartBtn').addEventListener('click', startGame);
 document.getElementById('backBtn').addEventListener('click', () => window.location.href = 'index.html');
 document.getElementById('menuBtn').addEventListener('click', () => window.location.href = 'index.html');
 document.getElementById('nextGameBtn').addEventListener('click', () => {
-    alert('Chapter 2: STICK WAR\n\nZed reached the surface but his rocket fuel is gone. Now he fights Zorak Creed\'s guards with a stick on the streets. Coming soon! 🚧');
+    alert('Chapter 2: STICK WAR\n\nComing soon! 🚧');
     window.location.href = 'index.html';
 });
 
