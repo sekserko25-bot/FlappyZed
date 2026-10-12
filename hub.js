@@ -37,26 +37,26 @@ function renderHub() {
     const grid = document.getElementById('gamesGrid');
     const progress = getProgress();
     const completed = getCompleted();
-    
+
     grid.innerHTML = '';
-    
+
     GAMES.forEach(game => {
         const slot = document.createElement('div');
         slot.className = 'game-slot';
-        
+
         const isUnlocked = game.id <= progress;
         const isCompleted = completed.includes(game.id);
-        
+
         if (isCompleted) slot.classList.add('completed');
         else if (isUnlocked) slot.classList.add('unlocked');
         else slot.classList.add('locked');
-        
+
         slot.innerHTML = `
             <div class="slot-number">CHAPTER ${game.id}</div>
             <div class="slot-icon">${game.icon}</div>
             <div class="slot-name">${game.name}</div>
         `;
-        
+
         if (isUnlocked && game.url !== '#') {
             slot.addEventListener('click', () => {
                 window.location.href = game.url;
@@ -66,12 +66,12 @@ function renderHub() {
                 alert('This chapter is still in development! 🚧');
             });
         }
-        
+
         grid.appendChild(slot);
     });
-    
+
     const completedCount = completed.length;
-    document.getElementById('progress-text').textContent = 
+    document.getElementById('progress-text').textContent =
         `Progress: ${completedCount} / 10`;
 }
 
@@ -83,8 +83,13 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     if (confirm('All progress will be deleted. Are you sure?')) {
         localStorage.removeItem('zakardiya_progress');
         localStorage.removeItem('zakardiya_completed');
+        localStorage.removeItem('zed_story_seen');
         renderHub();
     }
 });
 
-renderHub();
+if (!localStorage.getItem('zed_story_seen')) {
+    window.location.replace('story.html');
+} else {
+    renderHub();
+}
