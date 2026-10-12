@@ -6,7 +6,7 @@ canvas.height = 600;
 const WIN_SCORE = 150;
 
 let bird, pipes, coins, powerUps, floatingTexts, coinScore, coinCount, obstaclesPassed, gameRunning;
-let lastSpawnTime, lastTimestamp, currentSpeed, speedLevel;
+let lastSpawnTime, lastLooseCoinSpawnTime, lastTimestamp, currentSpeed, speedLevel;
 let fuel, lives, shieldActive, shieldTimer, magnetActive, magnetTimer;
 
 const GRAVITY = 0.45;
@@ -66,6 +66,7 @@ function init() {
     obstaclesPassed = 0;
     gameRunning = false;
     lastSpawnTime = 0;
+    lastLooseCoinSpawnTime = 0;
     lastTimestamp = 0;
     currentSpeed = BASE_SPEED;
     speedLevel = 0;
@@ -89,6 +90,7 @@ function startGame() {
     document.getElementById('win-screen').classList.add('hidden');
 
     lastSpawnTime = performance.now();
+    lastLooseCoinSpawnTime = lastSpawnTime;
     lastTimestamp = 0;
     requestAnimationFrame(gameLoop);
 }
@@ -227,6 +229,25 @@ function update(dt, timestamp) {
         spawnPipe();
         lastSpawnTime = timestamp;
     }
+    // Spawn coins halfway between pipe waves so coins also fill the open space.
+    if (timestamp - lastLooseCoinSpawnTime > PIPE_SPAWN_INTERVAL / 2) {
+        spawnLooseCoin();
+        lastLooseCoinSpawnTime = timestamp;
+    }
+}
+
+function spawnLooseCoin() {
+    const type = COIN_TYPES[Math.floor(Math.random() * COIN_TYPES.length)];
+    coins.push({
+        x: canvas.width + PIPE_WIDTH / 2,
+        y: 70 + Math.random() * (canvas.height - 140),
+        radius: 12,
+        rotation: 0,
+        symbol: type.symbol,
+        color: type.color,
+        value: type.value,
+        name: type.name
+    });
 }
 
 function activatePowerUp(type) {
