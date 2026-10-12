@@ -28,18 +28,28 @@ function renderShop() {
 }
 
 function saveShopInventory() {
-    localStorage.setItem(SHOP_KEY, JSON.stringify(shopInventory));
+    try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopInventory)); } catch (_) {}
     renderShop();
 }
 
 function buyPowerup(kind) {
-    shopInventory[kind] += 10;
+    if (!Object.prototype.hasOwnProperty.call(shopInventory, kind)) return;
+    shopInventory[kind] = Number(shopInventory[kind] || 0) + 10;
     saveShopInventory();
+    const feedback = document.getElementById('shop-feedback');
+    if (feedback) {
+        const names = { lives: 'ekstra can', shields: 'kalkan', magnets: 'mıknatıs' };
+        feedback.textContent = '✅ 10 ' + names[kind] + ' eklendi. Güncel stok: ' + shopInventory[kind];
+        feedback.classList.add('visible');
+    }
 }
+window.buyPowerup = buyPowerup;
 
-document.getElementById('buyLives').addEventListener('click', () => buyPowerup('lives'));
-document.getElementById('buyShields').addEventListener('click', () => buyPowerup('shields'));
-document.getElementById('buyMagnets').addEventListener('click', () => buyPowerup('magnets'));
+// Delegate the clicks so every BUY button uses the same purchase handler.
+document.getElementById('future-shop').addEventListener('click', event => {
+    const button = event.target.closest('.buy-item');
+    if (button) buyPowerup(button.dataset.kind);
+});
 
 function updateShieldButton() {
     const button = document.getElementById('useShieldBtn');
