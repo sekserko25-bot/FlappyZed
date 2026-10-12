@@ -17,7 +17,10 @@
         .buy-item { width:100%; padding:6px 2px; border-radius:7px; font-size:9px; letter-spacing:.5px; background:linear-gradient(45deg,#39e5ee,#71ffb1); color:#08121b; }
         #useShieldBtn { position:absolute; top:154px; right:9px; z-index:5; padding:8px 10px; background:rgba(0,210,230,.9); color:#00151a; font-size:10px; border-radius:9px; box-shadow:0 0 12px rgba(0,220,240,.35); }
         #useShieldBtn:disabled { opacity:.45; cursor:not-allowed; }
-        #start-screen #startBtn { flex:none; }
+        #start-screen { justify-content:flex-start; overflow-y:auto; padding-top:24px; padding-bottom:18px; }
+        #start-screen #startBtn { flex:none; margin-top:2px; }
+        #future-shop { flex:none; }
+        .buy-item { min-height:32px; cursor:pointer; pointer-events:auto; }
         @media(max-width:500px) {
             #future-shop { margin:0 0 10px; }
             #future-shop h2 { font-size:11px; margin-bottom:5px; }
@@ -86,5 +89,6 @@
     <script src="game1.js"></script>
     <script src="shop-runtime.js"></script>
     <script src="zed-character.js"></script>
+    <script src="character-scale.js"></script>
 </body>
 </html>
