@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- ============ MATRIX INTRO ============ -->
+    <!-- MATRIX INTRO -->
     <div id="matrixIntro">
         <canvas id="matrixCanvas"></canvas>
         <div class="intro-content">
@@ -26,27 +26,23 @@
             <div class="intro-line cyan">ONE MAN WILL RISE</div>
             <div class="intro-line cyan">HIS NAME IS ZED</div>
             <div class="intro-gap"></div>
-            <div class="intro-blink">[ PRESS ENTER TO CONTINUE ]</div>
+            <div class="intro-blink">[ TAP OR PRESS ENTER ]</div>
         </div>
     </div>
 
-    <!-- ============ MANGA PAGE ============ -->
-    <div class="manga-page-container" id="mangaContainer">
+    <!-- MANGA PAGE -->
+    <div class="manga-page-container" id="mangaContainer" style="display:none;">
         <div class="manga-page-scroll" id="mangaScroll">
-            <img src="images/story-page.png" alt="Zed's Revenge Prologue" class="manga-page-image" id="mangaImage">
-            <div class="manga-end-spacer"></div>
+            <img src="images/story-page.png" alt="Prologue" class="manga-page-image">
         </div>
         
         <div class="scroll-indicator" id="scrollHint">SCROLL TO READ ▼</div>
-        
         <div class="manga-controls-fixed">
             <button id="skipBtn">SKIP ⏩</button>
         </div>
-        
         <div class="manga-progress-bottom">
             <div class="manga-progress-fill" id="progressFill"></div>
         </div>
-        
         <div class="manga-finish" id="finishScreen">
             <div class="finish-content">
                 <h2>PROLOGUE COMPLETE</h2>
@@ -58,103 +54,109 @@
 
     <script>
         // ============ MATRIX INTRO ============
-        const matrixCanvas = document.getElementById('matrixCanvas');
-        const mCtx = matrixCanvas.getContext('2d');
-        matrixCanvas.width = window.innerWidth;
-        matrixCanvas.height = window.innerHeight;
+        const mCanvas = document.getElementById('matrixCanvas');
+        const mCtx = mCanvas.getContext('2d');
+        
+        function resizeMatrix() {
+            mCanvas.width = window.innerWidth;
+            mCanvas.height = window.innerHeight;
+        }
+        resizeMatrix();
+        window.addEventListener('resize', resizeMatrix);
 
         const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ZEDKRUMPZORAKCREED';
-        const fontSize = 16;
-        const columns = matrixCanvas.width / fontSize;
-        const drops = [];
-        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+        const fontSize = 18;
+        let drops = [];
+        
+        function initDrops() {
+            const columns = Math.floor(mCanvas.width / fontSize);
+            drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.floor(Math.random() * -50);
+            }
+        }
+        initDrops();
 
         function drawMatrix() {
-            mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            mCtx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+            mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
             mCtx.fillStyle = '#00ff41';
-            mCtx.font = fontSize + 'px monospace';
+            mCtx.font = 'bold ' + fontSize + 'px monospace';
             
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
                 mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
                 
-                if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) {
+                if (drops[i] * fontSize > mCanvas.height && Math.random() > 0.975) {
                     drops[i] = 0;
                 }
                 drops[i]++;
             }
         }
-        const matrixInterval = setInterval(drawMatrix, 40);
+        const matrixInterval = setInterval(drawMatrix, 35);
 
-        let introClosed = false;
+        const intro = document.getElementById('matrixIntro');
+        const mangaContainer = document.getElementById('mangaContainer');
+
         function closeIntro() {
-            if (introClosed) return;
-            introClosed = true;
             clearInterval(matrixInterval);
-            const intro = document.getElementById('matrixIntro');
+            intro.style.transition = 'opacity 0.8s';
             intro.style.opacity = '0';
-            setTimeout(() => intro.style.display = 'none', 800);
+            setTimeout(() => {
+                intro.style.display = 'none';
+                mangaContainer.style.display = 'block';
+                startManga();
+            }, 800);
         }
 
-        document.getElementById('matrixIntro').addEventListener('click', closeIntro);
+        intro.addEventListener('click', closeIntro);
+        intro.addEventListener('touchstart', (e) => { e.preventDefault(); closeIntro(); }, { passive: false });
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Enter' || e.code === 'Space') {
+                e.preventDefault();
                 closeIntro();
             }
         });
-        // Otomatik 15 saniye sonra kapan
         setTimeout(closeIntro, 15000);
 
-        // ============ MANGA SCROLL ============
-        const scroll = document.getElementById('mangaScroll');
-        const hint = document.getElementById('scrollHint');
-        const progress = document.getElementById('progressFill');
-        const finishScreen = document.getElementById('finishScreen');
-        let finished = false;
-
-        function updateProgress() {
-            const scrollTop = scroll.scrollTop;
-            const scrollHeight = scroll.scrollHeight - scroll.clientHeight;
-            const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-            progress.style.width = pct + '%';
+        // ============ MANGA ============
+        let mangaStarted = false;
+        function startManga() {
+            if (mangaStarted) return;
+            mangaStarted = true;
             
-            if (scrollTop > 100) {
-                hint.style.opacity = '0';
-            } else {
-                hint.style.opacity = '1';
-            }
-            
-            if (pct >= 95 && !finished) {
-                finished = true;
-                setTimeout(() => {
-                    finishScreen.classList.add('visible');
-                }, 500);
-            }
-        }
+            const scroll = document.getElementById('mangaScroll');
+            const hint = document.getElementById('scrollHint');
+            const progress = document.getElementById('progressFill');
+            const finishScreen = document.getElementById('finishScreen');
+            let finished = false;
 
-        scroll.addEventListener('scroll', updateProgress);
-        updateProgress();
-
-        function finishStory() {
-            localStorage.setItem('zed_story_seen', 'true');
-            localStorage.setItem('zakardiya_progress', 1);
-            window.location.href = 'game1.html';
-        }
-
-        document.getElementById('skipBtn').addEventListener('click', finishStory);
-        document.getElementById('continueBtn').addEventListener('click', finishStory);
-
-        document.addEventListener('keydown', (e) => {
-            if (introClosed) {
-                if (e.code === 'ArrowDown' || e.code === 'Space') {
-                    e.preventDefault();
-                    scroll.scrollBy({ top: 500, behavior: 'smooth' });
-                } else if (e.code === 'Escape') {
-                    finishStory();
+            function updateProgress() {
+                const scrollTop = scroll.scrollTop;
+                const scrollHeight = scroll.scrollHeight - scroll.clientHeight;
+                const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                progress.style.width = pct + '%';
+                
+                hint.style.opacity = scrollTop > 100 ? '0' : '1';
+                
+                if (pct >= 95 && !finished) {
+                    finished = true;
+                    setTimeout(() => finishScreen.classList.add('visible'), 500);
                 }
             }
-        });
+
+            scroll.addEventListener('scroll', updateProgress);
+            updateProgress();
+
+            function finishStory() {
+                localStorage.setItem('zed_story_seen', 'true');
+                localStorage.setItem('zakardiya_progress', 1);
+                window.location.href = 'game1.html';
+            }
+
+            document.getElementById('skipBtn').addEventListener('click', finishStory);
+            document.getElementById('continueBtn').addEventListener('click', finishStory);
+        }
     </script>
 </body>
 </html>
