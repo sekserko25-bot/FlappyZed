@@ -5,7 +5,7 @@ canvas.height = 600;
 
 const WIN_SCORE = 150;
 
-let bird, pipes, coins, powerUps, floatingTexts, score, coinCount, obstaclesPassed, gameRunning;
+let bird, pipes, coins, powerUps, floatingTexts, coinScore, coinCount, obstaclesPassed, gameRunning;
 let lastSpawnTime, lastTimestamp, currentSpeed, speedLevel;
 let fuel, lives, shieldActive, shieldTimer, magnetActive, magnetTimer;
 
@@ -61,7 +61,7 @@ function init() {
     coins = [];
     powerUps = [];
     floatingTexts = [];
-    score = 0;
+    coinScore = 0;
     coinCount = 0;
     obstaclesPassed = 0;
     gameRunning = false;
@@ -173,7 +173,7 @@ function update(dt, timestamp) {
 
         if (checkCoinCollision(bird, coins[i])) {
             // PUAN EKLE
-            score += coins[i].value;
+            coinScore += coins[i].value;
             coinCount++;
 
             // Uçan yazı ekle
@@ -626,7 +626,7 @@ function draw() {
     ctx.textAlign = 'left';
     ctx.shadowBlur = 10;
     ctx.shadowColor = '#000';
-    ctx.fillText('Score: ' + score, 20, 45);
+    ctx.fillText('COIN PUANI: ' + coinScore, 20, 45);
     ctx.fillStyle = '#00ffff';
     ctx.font = 'bold 20px Arial';
     ctx.fillText('Coins: ' + coinCount, 20, 75);
@@ -636,7 +636,7 @@ function draw() {
     ctx.fillText('Speed: ' + speedLevel + '/' + MAX_SPEED_LEVEL, canvas.width - 20, 45);
     ctx.fillStyle = '#ffcc00';
     ctx.textAlign = 'right';
-    ctx.fillText('Engel: ' + obstaclesPassed + '/' + WIN_SCORE, canvas.width - 20, 65);
+    ctx.fillText('ENGEL: ' + obstaclesPassed + '/' + WIN_SCORE, canvas.width - 20, 65);
 
     ctx.fillStyle = '#ff0000';
     ctx.font = 'bold 16px Arial';
@@ -708,14 +708,16 @@ function gameOver() {
         return;
     }
     gameRunning = false;
-    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalScore').textContent = coinScore;
+    document.getElementById('finalObstacles').textContent = obstaclesPassed;
     document.getElementById('finalCoins').textContent = coinCount;
     document.getElementById('game-over-screen').classList.remove('hidden');
 }
 
 function winGame() {
     gameRunning = false;
-    document.getElementById('winScore').textContent = score;
+    document.getElementById('winScore').textContent = coinScore;
+    document.getElementById('winObstacles').textContent = obstaclesPassed;
     document.getElementById('winCoins').textContent = coinCount;
     document.getElementById('win-screen').classList.remove('hidden');
     localStorage.setItem('zakardiya_progress', 2);
