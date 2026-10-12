@@ -193,12 +193,15 @@ window.draw = function () {
     if (runMagnetActive && gameRunning) {
         ctx.save();
         ctx.fillStyle = 'rgba(5, 10, 20, 0.92)';
-        ctx.fillRect(10, 134, 124, 19);
+        ctx.fillRect(10, 134, 180, 19);
         ctx.fillStyle = '#ff80f5';
         ctx.font = 'bold 10px Arial';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🧲 MAGNET · ACTIVE', 16, 144);
+        const remainingSeconds = Math.ceil(magnetTimer / 1000);
+        const remainingTime = Math.floor(remainingSeconds / 60) + ':' + String(remainingSeconds % 60).padStart(2, '0');
+        const queuedLabel = runMagnetChargesRemaining > 0 ? ' +' + runMagnetChargesRemaining : '';
+        ctx.fillText('🧲 MAGNET ' + remainingTime + queuedLabel, 16, 144);
         ctx.restore();
     }
 };
