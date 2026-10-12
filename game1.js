@@ -5,7 +5,7 @@ canvas.height = 600;
 
 const WIN_SCORE = 150;
 
-let bird, pipes, coins, powerUps, floatingTexts, score, coinCount, gameRunning;
+let bird, pipes, coins, powerUps, floatingTexts, score, coinCount, obstaclesPassed, gameRunning;
 let lastSpawnTime, lastTimestamp, currentSpeed, speedLevel;
 let fuel, lives, shieldActive, shieldTimer, magnetActive, magnetTimer;
 
@@ -25,16 +25,13 @@ const SCORE_PER_LEVEL = 20;
 
 // ============ COIN TİPLERİ (Puan değerleri) ============
 const COIN_TYPES = [
-    { symbol: '₿', name: 'BTC',   color: '#f7931a', value: 10 },
-    { symbol: 'Ξ', name: 'ETH',   color: '#627eea', value: 9 },
+    { symbol: 'Z', name: 'ZED',   color: '#00e5ff', value: 15 },
+    { symbol: '₿', name: 'BTC',   color: '#f7931a', value: 12 },
+    { symbol: 'Ξ', name: 'ETH',   color: '#627eea', value: 11 },
+    { symbol: '◎', name: 'SOL',   color: '#14f195', value: 10 },
     { symbol: 'K', name: 'KASPA', color: '#70c7ba', value: 9 },
-    { symbol: '◎', name: 'SOL',   color: '#14f195', value: 8 },
-    { symbol: 'B', name: 'BNB',   color: '#f3ba2f', value: 7 },
-    { symbol: 'X', name: 'XRP',   color: '#5a6bff', value: 5 },
-    { symbol: 'A', name: 'ADA',   color: '#0033ad', value: 5 },
-    { symbol: 'Ð', name: 'DOGE',  color: '#c2a633', value: 4 },
-    { symbol: 'N', name: 'NEXA',  color: '#9b59b6', value: 4 },
-    { symbol: '🐕', name: 'SHIBA', color: '#f00500', value: 3 }
+    { symbol: 'N', name: 'NEXA',  color: '#9b59b6', value: 8 },
+    { symbol: '🐕', name: 'SHIBA', color: '#f00500', value: 7 }
 ];
 
 // ============ POWER-UP TİPLERİ ============
@@ -66,6 +63,7 @@ function init() {
     floatingTexts = [];
     score = 0;
     coinCount = 0;
+    obstaclesPassed = 0;
     gameRunning = false;
     lastSpawnTime = 0;
     lastTimestamp = 0;
@@ -96,7 +94,7 @@ function startGame() {
 }
 
 function updateSpeed() {
-    const newLevel = Math.min(Math.floor(score / SCORE_PER_LEVEL), MAX_SPEED_LEVEL);
+    const newLevel = Math.min(Math.floor(obstaclesPassed / SCORE_PER_LEVEL), MAX_SPEED_LEVEL);
     if (newLevel > speedLevel) {
         speedLevel = newLevel;
         currentSpeed = BASE_SPEED + (speedLevel * SPEED_INCREMENT);
@@ -149,11 +147,10 @@ function update(dt, timestamp) {
         if (!shieldActive && checkCollision(bird, pipes[i])) { gameOver(); return; }
         if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
             pipes[i].passed = true;
-            score++;
-            fuel = WIN_SCORE - score;
-            if (fuel < 0) fuel = 0;
+            obstaclesPassed++;
+            fuel = Math.max(0, WIN_SCORE - obstaclesPassed);
             updateSpeed();
-            if (score >= WIN_SCORE) { winGame(); return; }
+            if (obstaclesPassed >= WIN_SCORE) { winGame(); return; }
         }
         if (pipes[i].x + pipes[i].width < 0) pipes.splice(i, 1);
     }
@@ -189,12 +186,7 @@ function update(dt, timestamp) {
                 vy: -1.5
             });
 
-            // Hız güncelle ve kazanma kontrolü
-            updateSpeed();
-            fuel = WIN_SCORE - score;
-            if (fuel < 0) fuel = 0;
-            if (score >= WIN_SCORE) { winGame(); return; }
-
+            // Coin puanları birikir; bölüm yalnızca 150 engel geçilince tamamlanır.
             coins.splice(i, 1);
             continue;
         }
@@ -525,7 +517,7 @@ function drawFuelBar() {
     const barWidth = 180, barHeight = 14;
     const barX = canvas.width / 2 - barWidth / 2;
     const barY = 110;
-    const fuelRatio = Math.max(0, Math.min(fuel / WIN_SCORE, 1));
+    const fuelRatio = Math.max(0, Math.min(obstaclesPassed / WIN_SCORE, 1));
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
     ctx.fillStyle = '#333';
@@ -551,7 +543,7 @@ function drawFuelBar() {
     ctx.textAlign = 'center';
     ctx.shadowBlur = 5;
     ctx.shadowColor = '#000';
-    ctx.fillText('FUEL: ' + Math.max(0, fuel), canvas.width / 2, barY - 5);
+    ctx.fillText('ENGEL: ' + obstaclesPassed + ' / ' + WIN_SCORE, canvas.width / 2, barY - 5);
     ctx.shadowBlur = 0;
 }
 
@@ -577,7 +569,7 @@ function drawPowerUp(pu) {
 
 // ============ DRAW ============
 function draw() {
-    const lightLevel = Math.min(score / WIN_SCORE, 1);
+    const lightLevel = Math.min(obstaclesPassed / WIN_SCORE, 1);
     const t = performance.now();
     drawBackground(lightLevel);
 
@@ -644,7 +636,7 @@ function draw() {
     ctx.fillText('Speed: ' + speedLevel + '/' + MAX_SPEED_LEVEL, canvas.width - 20, 45);
     ctx.fillStyle = '#ffcc00';
     ctx.textAlign = 'right';
-    ctx.fillText('Target: ' + WIN_SCORE, canvas.width - 20, 65);
+    ctx.fillText('Engel: ' + obstaclesPassed + '/' + WIN_SCORE, canvas.width - 20, 65);
 
     ctx.fillStyle = '#ff0000';
     ctx.font = 'bold 16px Arial';
@@ -678,12 +670,12 @@ function spawnPipe() {
     const character = Math.random() > 0.5 ? 'krump' : 'zorak';
     pipes.push({ x: canvas.width, width: PIPE_WIDTH, gapY, gap: PIPE_GAP, passed: false, character });
 
-    // Coin spawn
-    if (Math.random() > 0.3) {
+    // Her engel için iki coin; ikisi de geçiş boşluğunda görünür.
+    for (let coinIndex = 0; coinIndex < 2; coinIndex++) {
         const type = COIN_TYPES[Math.floor(Math.random() * COIN_TYPES.length)];
         coins.push({
-            x: canvas.width + PIPE_WIDTH / 2,
-            y: gapY + PIPE_GAP / 2,
+            x: canvas.width + PIPE_WIDTH / 2 + coinIndex * 46,
+            y: gapY + PIPE_GAP * (coinIndex === 0 ? 0.35 : 0.65),
             radius: 12,
             rotation: 0,
             symbol: type.symbol,
@@ -691,20 +683,6 @@ function spawnPipe() {
             value: type.value,
             name: type.name
         });
-        // Yukarıya coin (mıknatısla alınır)
-        if (Math.random() > 0.5) {
-            const type2 = COIN_TYPES[Math.floor(Math.random() * COIN_TYPES.length)];
-            coins.push({
-                x: canvas.width + PIPE_WIDTH / 2 + 50,
-                y: gapY - 60,
-                radius: 12,
-                rotation: 0,
-                symbol: type2.symbol,
-                color: type2.color,
-                value: type2.value,
-                name: type2.name
-            });
-        }
     }
 
     // Power-up spawn
