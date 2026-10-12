@@ -106,8 +106,6 @@ function finishPurchasedRun() {
     if (runMagnetActive && magnetActive && magnetTimer > 0) {
         // Keep the unused part of the active 15-minute charge for the next attempt.
         magnetTimeRemaining = magnetTimer;
-    } else if (!runMagnetActive) {
-        magnetTimeRemaining = 0;
     }
     runIsActive = false;
     runMagnetActive = false;
