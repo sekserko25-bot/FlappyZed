@@ -21,6 +21,8 @@
         #start-screen #startBtn { flex:none; margin-top:2px; }
         #future-shop { flex:none; }
         .buy-item { min-height:32px; cursor:pointer; pointer-events:auto; }
+        #shop-feedback { min-height:18px; margin:7px 0 0; color:#71ffb1; font-size:11px; font-weight:700; }
+        #shop-feedback.visible { text-shadow:0 0 8px rgba(113,255,177,.45); }
         @media(max-width:500px) {
             #future-shop { margin:0 0 10px; }
             #future-shop h2 { font-size:11px; margin-bottom:5px; }
@@ -51,19 +53,20 @@
                     <article class="shop-item">
                         <div class="shop-icon">❤️</div><div class="shop-name">Ekstra Can</div>
                         <div class="shop-stock">Stok: <span id="livesStock">0</span></div>
-                        <button class="buy-item" id="buyLives" type="button">BUY +10</button>
+                        <button class="buy-item" id="buyLives" data-kind="lives" type="button">BUY +10</button>
                     </article>
                     <article class="shop-item">
                         <div class="shop-icon">🛡️</div><div class="shop-name">Kalkan</div>
                         <div class="shop-stock">Stok: <span id="shieldsStock">0</span></div>
-                        <button class="buy-item" id="buyShields" type="button">BUY +10</button>
+                        <button class="buy-item" id="buyShields" data-kind="shields" type="button">BUY +10</button>
                     </article>
                     <article class="shop-item">
                         <div class="shop-icon">🧲</div><div class="shop-name">Mıknatıs</div>
                         <div class="shop-stock">Stok: <span id="magnetsStock">0</span></div>
-                        <button class="buy-item" id="buyMagnets" type="button">BUY +10</button>
+                        <button class="buy-item" id="buyMagnets" data-kind="magnets" type="button">BUY +10</button>
                     </article>
                 </div>
+                <p id="shop-feedback" role="status" aria-live="polite"></p>
             </section>
             <button id="startBtn">PLAY</button>
         </div>
