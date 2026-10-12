@@ -6,22 +6,27 @@
     <title>ZED'S REVENGE - Chapter 1: Escape from the Underground</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        #future-shop { width:100%; max-width:360px; margin:4px 0 18px; }
-        #future-shop h2 { color:#dce4f4; font-size:13px; letter-spacing:2px; margin-bottom:9px; }
-        #future-shop .shop-note { color:#aab0c0; font-size:10px; margin:0 0 10px; }
+        #future-shop { width:100%; max-width:360px; margin:4px 0 15px; }
+        #future-shop h2 { color:#dce4f4; font-size:13px; letter-spacing:2px; margin-bottom:8px; }
+        #future-shop .shop-note { color:#aab0c0; font-size:10px; margin:0 0 8px; }
         .shop-items { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
-        .shop-item { min-height:78px; padding:9px 5px 7px; background:linear-gradient(150deg,rgba(37,45,65,.96),rgba(15,19,30,.98)); border:1px solid rgba(95,220,240,.28); border-radius:11px; }
-        .shop-icon { font-size:22px; line-height:1.2; }
-        .shop-name { color:#f0f3fb; font-size:10px; font-weight:800; margin-top:4px; }
-        .shop-badge { color:#ffbd56; font-size:8px; letter-spacing:.5px; margin-top:5px; }
+        .shop-item { min-height:112px; padding:8px 5px 7px; background:linear-gradient(150deg,rgba(37,45,65,.96),rgba(15,19,30,.98)); border:1px solid rgba(95,220,240,.28); border-radius:11px; }
+        .shop-icon { font-size:21px; line-height:1.2; }
+        .shop-name { color:#f0f3fb; font-size:10px; font-weight:800; margin-top:3px; }
+        .shop-stock { color:#69e9f1; font:700 10px 'Courier New',monospace; margin:4px 0; }
+        .buy-item { width:100%; padding:6px 2px; border-radius:7px; font-size:9px; letter-spacing:.5px; background:linear-gradient(45deg,#39e5ee,#71ffb1); color:#08121b; }
+        #useShieldBtn { position:absolute; top:154px; right:9px; z-index:5; padding:8px 10px; background:rgba(0,210,230,.9); color:#00151a; font-size:10px; border-radius:9px; box-shadow:0 0 12px rgba(0,220,240,.35); }
+        #useShieldBtn:disabled { opacity:.45; cursor:not-allowed; }
         #start-screen #startBtn { flex:none; }
         @media(max-width:500px) {
-            #future-shop { margin:0 0 12px; }
-            #future-shop h2 { font-size:11px; margin-bottom:6px; }
-            #future-shop .shop-note { font-size:9px; margin-bottom:7px; }
-            .shop-item { min-height:68px; padding:7px 3px 5px; }
+            #future-shop { margin:0 0 10px; }
+            #future-shop h2 { font-size:11px; margin-bottom:5px; }
+            #future-shop .shop-note { font-size:9px; margin-bottom:6px; }
+            .shop-item { min-height:103px; padding:7px 3px 5px; }
             .shop-icon { font-size:19px; }
             .shop-name { font-size:9px; }
+            .buy-item { font-size:8px; padding:6px 1px; }
+            #useShieldBtn { top:155px; right:5px; padding:7px; font-size:9px; }
         }
     </style>
 </head>
@@ -29,19 +34,32 @@
     <div id="game-container">
         <canvas id="gameCanvas" width="400" height="600"></canvas>
         <div id="speed-message" class="hidden">⚡ DRONES INCOMING!</div>
+        <button id="useShieldBtn" class="hidden" type="button">🛡️ KALKAN · 0 | S</button>
         <div id="start-screen">
             <h1>ZED'S REVENGE</h1>
             <p>Chapter 1: Escape from the Underground</p>
-            <p style="font-size:13px;color:#aaa;margin-bottom:15px;max-width:320px;">
+            <p style="font-size:13px;color:#aaa;margin-bottom:12px;max-width:320px;">
                 Climb from Depth 7 to the surface. Reach 150 points. Your fuel runs out when you get there.
             </p>
-            <section id="future-shop" aria-label="Future power-up shop">
-                <h2>GÜÇ MAĞAZASI <span style="color:#ffbd56">• YAKINDA</span></h2>
-                <p class="shop-note">Bu güçler ileride ücretli olarak satışa çıkacak.</p>
+            <section id="future-shop" aria-label="Güç mağazası">
+                <h2>GÜÇ MAĞAZASI</h2>
+                <p class="shop-note">Her BUY tıklaması stoğa 10 adet ekler. Kullanılmayanlar kalır.</p>
                 <div class="shop-items">
-                    <article class="shop-item"><div class="shop-icon">❤️</div><div class="shop-name">Ekstra Can</div><div class="shop-badge">YAKINDA</div></article>
-                    <article class="shop-item"><div class="shop-icon">🛡️</div><div class="shop-name">Kalkan</div><div class="shop-badge">YAKINDA</div></article>
-                    <article class="shop-item"><div class="shop-icon">🧲</div><div class="shop-name">Mıknatıs</div><div class="shop-badge">YAKINDA</div></article>
+                    <article class="shop-item">
+                        <div class="shop-icon">❤️</div><div class="shop-name">Ekstra Can</div>
+                        <div class="shop-stock">Stok: <span id="livesStock">0</span></div>
+                        <button class="buy-item" id="buyLives" type="button">BUY +10</button>
+                    </article>
+                    <article class="shop-item">
+                        <div class="shop-icon">🛡️</div><div class="shop-name">Kalkan</div>
+                        <div class="shop-stock">Stok: <span id="shieldsStock">0</span></div>
+                        <button class="buy-item" id="buyShields" type="button">BUY +10</button>
+                    </article>
+                    <article class="shop-item">
+                        <div class="shop-icon">🧲</div><div class="shop-name">Mıknatıs</div>
+                        <div class="shop-stock">Stok: <span id="magnetsStock">0</span></div>
+                        <button class="buy-item" id="buyMagnets" type="button">BUY +10</button>
+                    </article>
                 </div>
             </section>
             <button id="startBtn">PLAY</button>
