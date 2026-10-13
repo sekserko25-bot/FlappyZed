@@ -797,8 +797,7 @@ document.getElementById('restartBtn').addEventListener('click', startGame);
 document.getElementById('backBtn').addEventListener('click', () => window.location.href = 'index.html');
 document.getElementById('menuBtn').addEventListener('click', () => window.location.href = 'index.html');
 document.getElementById('nextGameBtn').addEventListener('click', () => {
-    alert('Chapter 2: STICK WAR\n\nComing soon! 🚧');
-    window.location.href = 'index.html';
+    window.location.href = 'chapter2.html';
 });
 
 init();
