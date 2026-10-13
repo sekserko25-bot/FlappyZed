@@ -18,9 +18,12 @@ h1{margin:0 0 8px;color:#64f5ff;font-size:clamp(24px,5vw,42px);text-shadow:0 0 1
 h2{color:#ffd45a;margin:8px}.story{font-size:clamp(14px,2vw,18px);line-height:1.55;color:#d7dfef}
 .controls{margin:15px 0;color:#aebbd0;font-size:13px;line-height:1.8}
 button{border:0;border-radius:9px;background:linear-gradient(90deg,#45eaf4,#6affac);padding:12px 24px;font-weight:900;font-size:15px;cursor:pointer;color:#07131a}
+#powerupHud{position:absolute;left:14px;bottom:38px;padding:7px 10px;border:1px solid #60738b;border-radius:8px;background:#0b1222d9;text-shadow:2px 2px #000;font-size:12px;font-weight:800;pointer-events:none}
 #touch{position:absolute;inset:auto 12px 12px;display:none;justify-content:space-between;pointer-events:none}
 .touchgroup{display:flex;gap:8px}.touchbtn{pointer-events:auto;touch-action:none;opacity:.8;padding:12px 15px;border-radius:12px;background:#101a2bd9;border:1px solid #70eefa;color:white;font-size:18px}
-@media(max-width:700px){#hud{font-size:11px;inset:6px}.hudbox{padding:6px}.touchbtn{padding:10px 12px}#touch{display:flex}}
+.inventory-line{margin:10px auto;padding:10px;border:1px solid #526782;border-radius:10px;background:#09101dcc;color:#dce9ff;font-size:14px}
+.inventory-line input{width:54px;padding:5px;border:1px solid #52dce8;border-radius:6px;background:#0b1222;color:#fff;text-align:center;font-weight:bold}
+@media(max-width:700px){#hud{font-size:11px;inset:6px}.hudbox{padding:6px}.touchbtn{padding:10px 12px}#touch{display:flex}#powerupHud{bottom:74px;left:6px;font-size:10px}}
 </style>
 </head>
 <body>
@@ -31,12 +34,14 @@ button{border:0;border-radius:9px;background:linear-gradient(90deg,#45eaf4,#6aff
  <div class="hudbox"><span class="gold">ZED COIN</span> <span id="coins">0</span> · SKOR <span id="score">0</span><br><span class="cyan">BÖLGE</span> <span id="zone">1/5</span></div>
  <div class="hudbox">TANK <span id="tankState">YOK</span><br>⚔ <span id="armor">5</span></div>
 </div>
+<div id="powerupHud">🛡️ <span id="shieldStock">0</span> · 🧲 <span id="magnetStatus">PASİF</span></div>
 <div id="message"></div>
 <div id="intro" class="overlay">
  <div class="panel">
   <h1>ZED'S REVENGE</h1><h2>BÖLÜM 2: TANK KAÇKINI</h2>
   <p class="story">3101 yılında Zed sonunda yeryüzüne çıkar. Fakat özgürlük yerine projektörler, sirenler ve etrafını saran askerlerle karşılaşır. Tam yakalanacakken motor havuzundaki bir tankı gözüne kestirir.<br><br><strong>Plan basit:</strong> Tankı ele geçir, robotları ve askerleri aş, ZED coin'leri topla ve beş bölgeden geçerek komuta merkezine ulaş.</p>
-  <div class="controls">YATAY RETRO AKSİYON · 5 BÖLGE · Yaklaşık 10–15 dakikalık macera<br>← → / A D: hareket · ↑ / W / SPACE: zıpla · Z: saldır / tankla ateş et</div>
+  <div class="controls">YATAY RETRO AKSİYON · 5 BÖLGE · Yaklaşık 10–15 dakikalık macera<br>← → / A D: hareket · ↑ / W / SPACE: zıpla · Z: saldır / ateş · Fare veya Q/E: taret nişanı · S: kalkan</div>
+  <div class="inventory-line"><span id="inventorySummary">Envanter yükleniyor…</span><br>Bu bölümde kullanılacak mıknatıs: <input id="magnetUseCount" type="number" min="0" value="0" inputmode="numeric"></div>
   <button id="start">YÜZEYE ÇIK</button>
  </div>
 </div>
@@ -71,29 +76,53 @@ const coinTypes=[
 ];
 const keys={left:false,right:false,jump:false,attack:false};
 let state='intro',zone=0,worldX=0,cameraX=0,score=0,coinCount=0,lives=5,invulnerable=0;
-let player,enemies=[],coins=[],bullets=[],platforms=[],pits=[],particles=[];
-let tankFound=false,tankArmor=5,attackCooldown=0,messageTimer=0,lastTime=0;
+let player,enemies=[],coins=[],bullets=[],enemyBullets=[],platforms=[],pits=[],particles=[];
+let tankFound=false,tankArmor=5,attackCooldown=0,messageTimer=0,lastTime=0,tankCooldown=0;
+let tankAimAngle=0,tankAimDirection=1,mouseAim=false,shieldActive=false,shieldTimer=0,magnetActive=false,magnetTimer=0,magnetChargesRemaining=0;
+let runUsage={shields:0,magnets:0},shopInventory={lives:0,shields:0,magnets:0},purchasedLivesAtStart=0;
 let lastCoinLabel='ZED';
+const SHOP_KEY='zed_powerup_inventory_v1',MAGNET_TIME_KEY='zed_magnet_time_remaining_v1',MAGNET_DURATION=25000;
+function loadInventory(){
+ try{shopInventory={lives:0,shields:0,magnets:0,...JSON.parse(localStorage.getItem(SHOP_KEY)||'{}')};}
+ catch(_){shopInventory={lives:0,shields:0,magnets:0};}
+ for(const key of ['lives','shields','magnets'])shopInventory[key]=Math.max(0,Number(shopInventory[key])||0);
+ return shopInventory;
+}
+function refreshPowerupPanel(){
+ loadInventory();const choice=document.getElementById('magnetUseCount');
+ if(choice.dataset.initialized!=='yes'){choice.value=shopInventory.magnets>0?'1':'0';choice.dataset.initialized='yes';}
+ choice.max=shopInventory.magnets;choice.value=Math.min(Math.max(0,parseInt(choice.value,10)||0),shopInventory.magnets);
+ document.getElementById('inventorySummary').textContent='Envanter: '+shopInventory.lives+' ekstra can · '+shopInventory.shields+' kalkan · '+shopInventory.magnets+' mıknatıs';
+ document.getElementById('shieldStock').textContent=Math.max(0,shopInventory.shields-runUsage.shields);
+}
 function resetGame(){
- zone=0;worldX=0;cameraX=0;score=0;coinCount=0;lives=5;invulnerable=0;
- tankFound=false;tankArmor=5;lastCoinLabel='ZED';
- initZone();state='playing';lastTime=0;showMessage('Zed projektörlerin altında yüzeye çıktı! Motor havuzuna ulaş.',3200);
+ zone=0;worldX=0;cameraX=0;score=0;coinCount=0;invulnerable=0;
+ loadInventory();purchasedLivesAtStart=shopInventory.lives;lives=5+purchasedLivesAtStart;
+ runUsage={shields:0,magnets:0};shieldActive=false;shieldTimer=0;
+ tankFound=false;tankArmor=5;attackCooldown=0;tankCooldown=0;tankAimAngle=0;tankAimDirection=1;mouseAim=false;lastCoinLabel='ZED';
+ const requested=Math.max(0,parseInt(document.getElementById('magnetUseCount').value,10)||0);
+ magnetChargesRemaining=Math.min(requested,shopInventory.magnets);magnetActive=magnetChargesRemaining>0;
+ let stored=0;try{stored=Math.max(0,Number(localStorage.getItem(MAGNET_TIME_KEY))||0);}catch(_){}
+ magnetTimer=magnetActive?(stored>0?Math.min(MAGNET_DURATION,stored):MAGNET_DURATION):0;
+ refreshPowerupPanel();initZone();state='playing';lastTime=0;
+ showMessage('Zed projektörlerin altında yüzeye çıktı! Motor havuzuna ulaş.',3200);
 }
 function initZone(){
- worldX=0;cameraX=0;bullets=[];particles=[];
+ worldX=0;cameraX=0;bullets=[];enemyBullets=[];particles=[];
  player={x:120,y:GROUND-52,w:42,h:52,vy:0,grounded:true,face:1,attack:0};
  enemies=[];coins=[];platforms=[];pits=[];
  for(let x=900;x<ZONE_LENGTH-1100;x+=1150){
    if(x>2800 && x%4!==0) pits.push({x:x+300,w:150+(x%3)*35});
    platforms.push({x:x+120,w:130+(x%2)*50,y:GROUND-55-(x%3)*22});
-   enemies.push({x:x+420,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:Math.random()>.52?'robot':'soldier',dir:-1,alive:true,cool:0});
-   if(x%3===0) enemies.push({x:x+760,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:1,alive:true,cool:0});
+   enemies.push({x:x+420,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:Math.random()>.52?'robot':'soldier',dir:-1,alive:true,cool:.7+Math.random()});
+   if(x%3===0) enemies.push({x:x+760,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:1,alive:true,cool:1+Math.random()});
+   if(zone>0&&Math.floor((x-900)/1150)%4===1)enemies.push({x:x+900,y:GROUND-58,w:96,h:58,hp:7,maxHp:7,type:'enemyTank',dir:-1,alive:true,cool:1.2+Math.random()});
  }
  if(zone===0){
    // Keep the first patrol outside aggro range so players have time to react at spawn.
-   enemies.push({x:620,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:1,alive:true,cool:0});
-   enemies.push({x:930,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:-1,alive:true,cool:0});
-   enemies.push({x:1230,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:-1,alive:true,cool:0});
+   enemies.push({x:620,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:1,alive:true,cool:2.2});
+   enemies.push({x:930,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:-1,alive:true,cool:2.8});
+   enemies.push({x:1230,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:-1,alive:true,cool:3.3});
  }
  for(let x=550;x<ZONE_LENGTH-500;x+=470){
    const type=coinTypes[Math.floor(Math.random()*coinTypes.length)];
@@ -114,9 +143,29 @@ function punch(){
  if(reach>0&&reach<68&&Math.abs((e.y+e.h/2)-(player.y+player.h/2))<55){damageEnemy(e,1);hit=true;}});
  if(hit)score+=3;
 }
-function fireBullet(){bullets.push({x:worldX+player.x+player.face*32,y:player.y+21,vx:player.face*9,life:150});}
+function fireBullet(){
+ if(tankFound){
+  if(tankCooldown>0)return;tankCooldown=.2;
+  bullets.push({x:worldX+player.x+29+tankAimDirection*Math.cos(tankAimAngle)*48,y:player.y+25+Math.sin(tankAimAngle)*18,vx:tankAimDirection*Math.cos(tankAimAngle)*10,vy:Math.sin(tankAimAngle)*10,life:150,tank:true});
+ }else bullets.push({x:worldX+player.x+player.face*28,y:player.y+21,vx:player.face*9,vy:0,life:100});
+}
+function useShield(){
+ if(state!=='playing'||shieldActive||shopInventory.shields-runUsage.shields<=0)return;
+ shieldActive=true;shieldTimer=5;runUsage.shields++;showMessage('Kalkan etkin! 5 saniye boyunca darbeleri durdurur.',1500);refreshPowerupPanel();
+}
+function fireEnemyShot(e,playerWorld){
+ const center=e.type==='enemyTank'?e.x+e.w*.52:e.x+e.w*.5,muzzleY=e.type==='enemyTank'?e.y+18:e.y+e.h*.52;
+ const tx=playerWorld+player.w*.5,ty=player.y+player.h*.5,dx=tx-center,dy=ty-muzzleY,len=Math.max(1,Math.hypot(dx,dy)),speed=e.type==='enemyTank'?4.4:3.8;
+ enemyBullets.push({x:center,y:muzzleY,vx:dx/len*speed,vy:dy/len*speed,life:180,heavy:e.type==='enemyTank'||e.boss});
+}
+function setTankAimFromPointer(ev){
+ if(!tankFound)return;
+ const r=canvas.getBoundingClientRect(),mx=(ev.clientX-r.left)*W/r.width-player.x-28,my=(ev.clientY-r.top)*H/r.height-(player.y+25);
+ tankAimDirection=mx<0?-1:1;tankAimAngle=Math.max(-.72,Math.min(.72,Math.atan2(my,Math.abs(mx))));mouseAim=true;
+}
 function damageEnemy(e,amount){e.hp-=amount;particles.push({x:e.x,y:e.y+10,life:.4,color:'#ffd86b'});if(e.hp<=0){e.alive=false;score+=e.boss?250:25;}}
 function damagePlayer(){
+ if(shieldActive&&shieldTimer>0){showMessage('Kalkan darbeyi karşıladı!',700);return;}
  if(invulnerable>0)return;
  if(tankFound&&tankArmor>0){tankArmor--;showMessage('Tank zırhı darbe aldı! Zırh: '+tankArmor,1000);if(tankArmor===0){tankFound=false;showMessage('Tank devre dışı! Yaya devam et.',1800);}}
  else {lives--;showMessage('Darbe aldın! Dikkatli ilerle.',1100);}
@@ -154,20 +203,52 @@ function movePlayer(dt){
  if(worldX>=ZONE_LENGTH-350&&!enemies.some(e=>e.boss&&e.alive)){nextZone();}
 }
 function update(dt){
- movePlayer(dt);attackCooldown=Math.max(0,attackCooldown-dt);if(player.attack>0)player.attack-=dt;
+ movePlayer(dt);attackCooldown=Math.max(0,attackCooldown-dt);tankCooldown=Math.max(0,tankCooldown-dt);if(player.attack>0)player.attack-=dt;
  if(invulnerable>0)invulnerable-=dt;
+ if(shieldActive){shieldTimer-=dt;if(shieldTimer<=0){shieldActive=false;shieldTimer=0;showMessage('Kalkan süresi doldu.',900);}}
+ if(magnetActive){
+  magnetTimer-=dt*1000;
+  if(magnetTimer<=0){
+   runUsage.magnets++;magnetChargesRemaining--;
+   if(magnetChargesRemaining>0){magnetTimer=MAGNET_DURATION;showMessage('Yeni mıknatıs devrede!',900);}
+   else{magnetTimer=0;magnetActive=false;showMessage('Mıknatıs süresi bitti.',1000);}
+  }
+ }
+ const playerWorld=worldX+player.x+player.w*.5;
+ if(tankFound&&!mouseAim){
+  const target=enemies.filter(e=>e.alive&&e.x>worldX-100).sort((a,b)=>Math.abs(a.x-playerWorld)-Math.abs(b.x-playerWorld))[0];
+  if(target){const tx=target.x+(target.w||38)*.5,ty=target.y+(target.h||42)*.45,dx=tx-playerWorld;tankAimDirection=dx<0?-1:1;tankAimAngle=Math.max(-.58,Math.min(.58,Math.atan2(ty-(player.y+25),Math.abs(dx))));}
+ }
  enemies.forEach(e=>{
   if(!e.alive)return;
-  const delta=(worldX+player.x)-e.x;
-  if(Math.abs(delta)<430){e.x+=Math.sign(delta)*Math.min(Math.abs(delta),.5*dt*60);e.dir=Math.sign(delta)||e.dir;}
-  if(Math.abs(delta)<35&&Math.abs(player.y-e.y)<60)damagePlayer();
+  const center=e.x+e.w*.5,delta=playerWorld-center;e.cool-=dt;
+  if(e.type!=='enemyTank'&&Math.abs(delta)<430){e.x+=Math.sign(delta)*Math.min(Math.abs(delta),.5*dt*60);e.dir=Math.sign(delta)||e.dir;}
+  const reach=e.type==='enemyTank'?68:(e.boss?60:35);
+  if(Math.abs(delta)<reach&&Math.abs(player.y-e.y)<(e.type==='enemyTank'?65:60))damagePlayer();
+  if(Math.abs(delta)<620&&Math.abs(delta)>115&&e.cool<=0){
+   fireEnemyShot(e,playerWorld);
+   e.cool=e.type==='enemyTank'?1.6+Math.random()*.6:e.boss?1.8+Math.random()*.8:1.65+Math.random()*.75;
+  }
   if(e.boss&&Math.abs(delta)<420&&Math.random()<.012){coins.push({x:e.x-60,y:GROUND-150-Math.random()*90,r:12,type:coinTypes[Math.floor(Math.random()*coinTypes.length)],alive:true});}
  });
- bullets.forEach(b=>{b.x+=b.vx*dt*60;b.life-=dt*60;enemies.forEach(e=>{if(e.alive&&Math.abs(b.x-e.x)<30&&Math.abs(b.y-e.y)<45){damageEnemy(e,tankFound?2:1);b.life=0;}});});
+ bullets.forEach(b=>{b.x+=b.vx*dt*60;b.y+=(b.vy||0)*dt*60;b.life-=dt*60;enemies.forEach(e=>{
+  const center=e.x+(e.w||38)*.5,half=e.type==='enemyTank'?53:e.boss?50:30;
+  if(e.alive&&Math.abs(b.x-center)<half&&Math.abs(b.y-(e.y+(e.h||42)*.5))<(e.type==='enemyTank'?35:45)){damageEnemy(e,b.tank?2:1);b.life=0;}
+ });});
  bullets=bullets.filter(b=>b.life>0);
- coins.forEach(c=>{if(c.alive&&Math.abs(c.x-(worldX+player.x+player.w/2))<32&&Math.abs(c.y-(player.y+player.h/2))<38){c.alive=false;coinCount++;score+=c.type.value;lastCoinLabel=c.type.name;showMessage('+'+c.type.value+' '+c.type.name+' COIN',650);}});
+ enemyBullets.forEach(b=>{b.x+=b.vx*dt*60;b.y+=b.vy*dt*60;b.life-=dt*60;
+  if(!b.hit&&Math.abs(b.x-playerWorld)<(tankFound?44:22)&&Math.abs(b.y-(player.y+player.h*.5))<(tankFound?35:27)){b.hit=true;damagePlayer();b.life=0;}
+ });
+ enemyBullets=enemyBullets.filter(b=>b.life>0);
+ coins.forEach(c=>{
+  if(c.alive&&magnetActive){
+   const dx=playerWorld-c.x,dy=(player.y+player.h*.5)-c.y;
+   if(Math.abs(dx)<430&&Math.abs(dy)<210){c.x+=Math.sign(dx)*Math.min(Math.abs(dx),6*dt*60);c.y+=Math.sign(dy)*Math.min(Math.abs(dy),6*dt*60);}
+  }
+  if(c.alive&&Math.abs(c.x-playerWorld)<32&&Math.abs(c.y-(player.y+player.h*.5))<38){c.alive=false;coinCount++;score+=c.type.value;lastCoinLabel=c.type.name;showMessage('+'+c.type.value+' '+c.type.name+' COIN',650);}
+ });
  coins=coins.filter(c=>c.alive);
- if(!tankFound&&zone===0&&worldX+player.x>1350){tankFound=true;tankArmor=5;showMessage('TANKI ELE GEÇİRDİN! Z ile ateş et, düşmanları aş.',2800);}
+ if(!tankFound&&zone===0&&worldX+player.x>1350){tankFound=true;tankArmor=5;tankAimAngle=0;tankAimDirection=1;mouseAim=false;showMessage('TANKI ELE GEÇİRDİN! Fare/Q-E ile nişan al, Z ile ateş et.',2800);}
  if(messageTimer>0){messageTimer-=dt*1000;if(messageTimer<=0)document.getElementById('message').classList.remove('show');}
  updateHud();
 }
@@ -177,7 +258,17 @@ function nextZone(){
  zone++;initZone();player.x=120;player.y=GROUND-player.h;showMessage(stages[zone].name+' bölgesine girdin. İlerle!',2200);
 }
 function finish(won){
- state=won?'won':'lost';
+ if(state!=='playing')return;
+ const usedLives=Math.max(0,purchasedLivesAtStart-Math.max(0,lives-5));
+ try{
+  loadInventory();shopInventory.lives=Math.max(0,shopInventory.lives-usedLives);
+  shopInventory.shields=Math.max(0,shopInventory.shields-runUsage.shields);
+  shopInventory.magnets=Math.max(0,shopInventory.magnets-runUsage.magnets);
+  localStorage.setItem(SHOP_KEY,JSON.stringify(shopInventory));
+  if(magnetActive&&magnetTimer>0&&shopInventory.magnets>0)localStorage.setItem(MAGNET_TIME_KEY,String(magnetTimer));
+  else if(!magnetActive||shopInventory.magnets<=0)localStorage.setItem(MAGNET_TIME_KEY,'0');
+ }catch(_){}
+ state=won?'won':'lost';refreshPowerupPanel();
  if(won){
   document.getElementById('endTitle').textContent='YERYÜZÜ SENİN!';
   document.getElementById('endText').textContent='Beş bölgeyi aştın, komuta merkezini düşürdün ve ZED coin hazineni korudun. Sıradaki hikâye yolu açıldı.';
@@ -191,12 +282,14 @@ function finish(won){
 }
 function updateHud(){
  document.getElementById('stageName').textContent=stages[zone].name;
- document.getElementById('lives').textContent='❤️'.repeat(Math.max(0,lives))+'🖤'.repeat(Math.max(0,5-lives));
+ document.getElementById('lives').textContent='❤️'.repeat(Math.min(5,Math.max(0,lives)))+'🖤'.repeat(Math.max(0,5-Math.min(5,lives)))+(lives>5?' +'+(lives-5)+' CAN':'');
  document.getElementById('coins').textContent=coinCount+' ('+lastCoinLabel+')';
  document.getElementById('score').textContent=score;
  document.getElementById('zone').textContent=(zone+1)+'/'+TOTAL_ZONES;
  document.getElementById('tankState').textContent=tankFound?'ALINDI':'YOK';
  document.getElementById('armor').textContent=tankArmor;
+ document.getElementById('shieldStock').textContent=Math.max(0,shopInventory.shields-runUsage.shields);
+ document.getElementById('magnetStatus').textContent=magnetActive?Math.ceil(magnetTimer/1000)+'s · '+magnetChargesRemaining:'PASİF';
 }
 function drawBackground(){
  const s=stages[zone],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,s.sky);g.addColorStop(1,'#172331');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -209,40 +302,105 @@ function drawBackground(){
  if(zone===0){ctx.fillStyle='#fff5a011';for(let i=0;i<3;i++){const x=(150+i*360-worldX*.12%700);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x-100,GROUND);ctx.lineTo(x+120,GROUND);ctx.fill();}}
 }
 function drawCoin(c){const x=c.x-worldX;ctx.save();ctx.fillStyle=c.type.color;ctx.shadowBlur=14;ctx.shadowColor=c.type.color;ctx.beginPath();ctx.arc(x,c.y,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#111';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.type.symbol,x,c.y);ctx.restore();}
+function drawTankModel(x,y,angle,hostile=false,direction=1){
+ const hull=hostile?'#795052':'#718c43',shine=hostile?'#c8786b':'#b8cc70',dark=hostile?'#39272c':'#27372a';
+ ctx.save();ctx.translate(x,y);if(direction<0){ctx.translate(96,0);ctx.scale(-1,1);}
+ ctx.fillStyle='#05080c66';ctx.beginPath();ctx.ellipse(48,54,57,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#252b2b';ctx.strokeStyle='#929a98';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(0,30,96,27,13);ctx.fill();ctx.stroke();
+ for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#59656a':'#46515a';ctx.beginPath();ctx.arc(12+i*10.3,43,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aeb6ac';ctx.beginPath();ctx.arc(12+i*10.3,43,2.6,0,Math.PI*2);ctx.fill();}
+ ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(8,29);ctx.lineTo(18,14);ctx.lineTo(78,14);ctx.lineTo(91,29);ctx.lineTo(87,39);ctx.lineTo(11,39);ctx.closePath();ctx.fill();
+ ctx.fillStyle=hull;ctx.strokeStyle=dark;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,27);ctx.lineTo(20,11);ctx.lineTo(76,11);ctx.lineTo(91,27);ctx.lineTo(87,36);ctx.lineTo(11,36);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle=shine;ctx.beginPath();ctx.moveTo(22,14);ctx.lineTo(31,5);ctx.lineTo(66,5);ctx.lineTo(77,14);ctx.closePath();ctx.fill();
+ ctx.save();ctx.translate(49,13);ctx.rotate(direction<0?-angle:angle);
+ ctx.fillStyle=dark;ctx.beginPath();ctx.roundRect(-15,-8,32,18,7);ctx.fill();
+ ctx.fillStyle=shine;ctx.beginPath();ctx.roundRect(-12,-11,27,15,6);ctx.fill();
+ ctx.fillStyle=hull;ctx.beginPath();ctx.roundRect(8,-7,48,7,3);ctx.fill();ctx.fillStyle=dark;ctx.fillRect(43,-8,13,9);
+ ctx.fillStyle=hostile?'#ff6f69':'#ff4562';ctx.shadowBlur=10;ctx.shadowColor=ctx.fillStyle;ctx.fillRect(-7,-7,11,4);ctx.shadowBlur=0;
+ ctx.restore();
+ ctx.fillStyle=hostile?'#ffb44e':'#5cf3ed';ctx.fillRect(13,23,9,3);ctx.fillRect(75,23,9,3);
+ ctx.fillStyle='#151a1e';ctx.font='bold 7px Arial';ctx.textAlign='center';ctx.fillText(hostile?'HOSTILE':'ZED',48,52);ctx.restore();
+}
 function drawEnemy(e){
  const x=e.x-worldX,y=e.y;
+ if(e.type==='enemyTank'){
+  const dx=worldX+player.x+player.w*.5-(e.x+e.w*.5),dy=player.y+player.h*.5-(e.y+18),dir=dx<0?-1:1;
+  drawTankModel(x,y,Math.atan2(dy,Math.abs(dx)),true,dir);
+  ctx.fillStyle='#121820';ctx.fillRect(x+7,y-8,82,5);ctx.fillStyle='#ff7770';ctx.fillRect(x+8,y-7,80*Math.max(0,e.hp/e.maxHp),3);return;
+ }
  ctx.save();
- if(e.boss){ctx.fillStyle='#421f35';ctx.fillRect(x-12,y-8,96,83);ctx.fillStyle='#ef456e';ctx.fillRect(x+4,y+8,64,22);ctx.fillStyle='#ffe4b0';ctx.fillRect(x+20,y+35,34,19);ctx.fillStyle='#111';ctx.fillRect(x+22,y+40,9,5);ctx.fillRect(x+43,y+40,9,5);ctx.fillStyle='#ff536f';ctx.fillRect(x+14,y+57,54,9);ctx.fillStyle='#fff';ctx.font='bold 12px Arial';ctx.fillText('COMMANDER',x-10,y-14);
- }else if(e.type==='soldier'){ctx.fillStyle='#546b43';ctx.fillRect(x+8,y+14,23,25);ctx.fillStyle='#c79e72';ctx.fillRect(x+10,y,19,17);ctx.fillStyle='#394c34';ctx.fillRect(x+7,y-3,25,8);ctx.fillStyle='#222';ctx.fillRect(x+26,y+20,22,5);ctx.fillRect(x+9,y+38,8,13);ctx.fillRect(x+24,y+38,8,13);
- }else{ctx.fillStyle='#778899';ctx.fillRect(x+5,y+8,30,29);ctx.fillStyle='#bdeeff';ctx.fillRect(x+10,y+14,8,5);ctx.fillRect(x+23,y+14,8,5);ctx.fillStyle='#485868';ctx.fillRect(x+1,y+37,38,10);ctx.fillStyle='#ff5c72';ctx.fillRect(x+16,y+25,9,4);}
- if(e.boss){ctx.fillStyle='#111';ctx.fillRect(x,y-28,78,7);ctx.fillStyle='#ff4d70';ctx.fillRect(x,y-28,78*Math.max(0,e.hp/e.maxHp),7);}
- else{ctx.fillStyle='#111';ctx.fillRect(x+2,y-7,34,4);ctx.fillStyle='#88ff83';ctx.fillRect(x+2,y-7,34*Math.max(0,e.hp/e.maxHp),4);}
+ if(e.boss){
+  const glow=ctx.createRadialGradient(x+36,y+32,8,x+36,y+32,64);glow.addColorStop(0,'#ff526b77');glow.addColorStop(1,'#ff526b00');ctx.fillStyle=glow;ctx.fillRect(x-30,y-35,130,125);
+  ctx.fillStyle='#211d35';ctx.strokeStyle='#ff5675';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(x-3,y-5,77,72,16);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#71324d';ctx.beginPath();ctx.roundRect(x+8,y+8,56,35,10);ctx.fill();
+  ctx.fillStyle='#ffda94';ctx.fillRect(x+14,y+18,19,8);ctx.fillRect(x+43,y+18,15,8);
+  ctx.fillStyle='#211d35';ctx.fillRect(x+17,y+20,12,4);ctx.fillRect(x+46,y+20,9,4);
+  ctx.fillStyle='#ed4266';ctx.beginPath();ctx.moveTo(x+14,y+42);ctx.lineTo(x+58,y+42);ctx.lineTo(x+50,y+53);ctx.lineTo(x+22,y+53);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#111';ctx.fillRect(x,y-28,78,7);ctx.fillStyle='#ff4d70';ctx.fillRect(x,y-28,78*Math.max(0,e.hp/e.maxHp),7);
+  ctx.fillStyle='#fff';ctx.font='bold 11px Arial';ctx.textAlign='left';ctx.fillText('COMMANDER',x-8,y-34);
+ }else if(e.type==='soldier'){
+  const stride=Math.sin(performance.now()/95+e.x)*2;ctx.lineCap='round';
+  ctx.strokeStyle='#222936';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x+17,y+34);ctx.lineTo(x+15+stride,y+47);ctx.moveTo(x+26,y+34);ctx.lineTo(x+29-stride,y+47);ctx.stroke();
+  ctx.fillStyle='#263039';ctx.beginPath();ctx.roundRect(x+7,y+13,30,27,7);ctx.fill();
+  ctx.fillStyle='#53694d';ctx.beginPath();ctx.roundRect(x+9,y+15,25,23,5);ctx.fill();
+  ctx.fillStyle='#758d59';ctx.fillRect(x+11,y+20,21,4);ctx.fillStyle='#18222a';ctx.fillRect(x+17,y+23,12,12);
+  ctx.fillStyle='#1b252d';ctx.beginPath();ctx.arc(x+21,y+8,11,Math.PI,Math.PI*2);ctx.lineTo(x+32,y+14);ctx.lineTo(x+10,y+14);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#c9a180';ctx.fillRect(x+14,y+8,15,10);ctx.fillStyle='#252d3a';ctx.fillRect(x+9,y+5,24,7);ctx.fillStyle='#e4bd6d';ctx.fillRect(x+17,y+6,9,3);
+  ctx.fillStyle='#d44359';ctx.shadowBlur=7;ctx.shadowColor='#f04b61';ctx.fillRect(x+15,y+12,15,4);ctx.shadowBlur=0;
+  ctx.fillStyle='#323b49';ctx.beginPath();ctx.roundRect(x+27,y+21,25,5,2);ctx.fill();ctx.fillStyle='#c3d1d7';ctx.fillRect(x+44,y+22,10,2);
+ }else{
+  const bob=Math.sin(performance.now()/120+e.x)*2;ctx.fillStyle='#202c3b';ctx.beginPath();ctx.roundRect(x+7,y+31+bob,26,15,6);ctx.fill();
+  ctx.fillStyle='#627587';ctx.beginPath();ctx.roundRect(x+8,y+7+bob,26,28,7);ctx.fill();
+  ctx.fillStyle='#99b5c5';ctx.beginPath();ctx.roundRect(x+12,y+2+bob,19,11,6);ctx.fill();
+  ctx.fillStyle='#10212d';ctx.fillRect(x+11,y+13+bob,21,11);
+  ctx.fillStyle='#5af2ff';ctx.shadowBlur=10;ctx.shadowColor='#35e7ff';ctx.fillRect(x+12,y+15+bob,8,5);ctx.fillRect(x+24,y+15+bob,8,5);ctx.shadowBlur=0;
+  ctx.fillStyle='#d94b70';ctx.fillRect(x+18,y+24+bob,8,3);
+  ctx.strokeStyle='#99b5c5';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x+10,y+19+bob);ctx.lineTo(x+3,y+31+bob);ctx.moveTo(x+31,y+20+bob);ctx.lineTo(x+38,y+28+bob);ctx.stroke();
+  ctx.fillStyle='#b5c4d1';ctx.fillRect(x+3,y+29+bob,8,4);ctx.fillRect(x+33,y+27+bob,8,4);
+  ctx.fillStyle='#65eaf2';ctx.fillRect(x+17,y-3+bob,3,8);ctx.fillRect(x+19,y-5+bob,8,3);
+ }
+ if(!e.boss){ctx.fillStyle='#101923';ctx.fillRect(x+2,y-7,35,5);ctx.fillStyle=e.type==='soldier'?'#8ce583':'#50eaff';ctx.fillRect(x+3,y-6,33*Math.max(0,e.hp/e.maxHp),3);}
  ctx.restore();
-}
-function drawParkedTank(){
+}function drawParkedTank(){
  if(zone!==0||tankFound)return;
- const x=1400-worldX,y=GROUND-45;
- if(x<-100||x>W+100)return;
- ctx.fillStyle='#657a3b';ctx.fillRect(x,y+14,82,27);
- ctx.fillStyle='#34412d';for(let i=0;i<7;i++){ctx.beginPath();ctx.arc(x+5+i*11,y+42,6,0,Math.PI*2);ctx.fill();}
- ctx.fillStyle='#91a64d';ctx.fillRect(x+15,y+1,43,18);
- ctx.fillStyle='#758b43';ctx.fillRect(x+48,y+6,40,7);
- ctx.fillStyle='#222d28';ctx.fillRect(x+22,y+6,14,9);
- ctx.fillStyle='#ffca58';ctx.fillRect(x+68,y+20,8,5);
+ const x=1400-worldX,y=GROUND-57;if(x<-120||x>W+120)return;
+ drawTankModel(x,y,0,false);ctx.save();ctx.fillStyle='#fff2a8';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText('TANKI ELE GEÇİR',x+48,y-7);ctx.restore();
 }
 function drawPlayer(){
- const x=player.x,y=player.y;ctx.save();if(invulnerable>0&&Math.floor(invulnerable*12)%2)ctx.globalAlpha=.45;
+ const x=player.x,y=player.y,now=performance.now(),run=Math.sin(now/75)*1.8;
+ ctx.save();if(invulnerable>0&&Math.floor(invulnerable*12)%2)ctx.globalAlpha=.45;
  if(tankFound){
-  ctx.fillStyle='#758c45';ctx.fillRect(x-10,y+16,72,31);ctx.fillStyle='#34412d';for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(x-2+i*10,y+48,5,0,Math.PI*2);ctx.fill();}
-  ctx.fillStyle='#aec06a';ctx.fillRect(x+9,y+4,40,17);ctx.fillRect(x+39,y+8,35,7);ctx.fillStyle='#1c2b2c';ctx.fillRect(x+16,y+8,13,8);
-  ctx.fillStyle='#f14a65';ctx.fillRect(x+26,y+10,8,4);
+  drawTankModel(x-27,y-5,tankAimAngle,false,tankAimDirection);
  }else{
-  // Zed's black/cyan hair, red visor, long coat, and rocket pack.
-  ctx.fillStyle='#151b29';ctx.fillRect(x+10,y+15,24,28);ctx.fillStyle='#26ddeb';ctx.fillRect(x+27,y+19,10,23);
-  ctx.fillStyle='#dba87f';ctx.fillRect(x+13,y+2,24,20);ctx.fillStyle='#111827';ctx.fillRect(x+8,y-2,31,12);ctx.fillStyle='#ec425e';ctx.fillRect(x+12,y+8,27,7);
-  ctx.fillStyle='#e6eaf0';ctx.fillRect(x+14,y+23,18,18);ctx.fillStyle='#ed3159';ctx.fillRect(x+22,y+23,5,15);
-  ctx.fillStyle='#171e2b';ctx.fillRect(x+14,y+42,8,10);ctx.fillRect(x+27,y+42,8,10);ctx.fillStyle='#42e5f1';ctx.fillRect(x+5,y+24,7,15);
+  ctx.translate(x+21,y+27);ctx.scale(1.14,1.14);
+  const flame=ctx.createLinearGradient(-17,4,-40,4);flame.addColorStop(0,'#fff6b6');flame.addColorStop(.3,'#ffb039');flame.addColorStop(1,'#f64c36');
+  ctx.fillStyle=flame;ctx.shadowBlur=12;ctx.shadowColor='#ff7338';ctx.beginPath();ctx.moveTo(-15,0);ctx.quadraticCurveTo(-35,-5-run,-42,3);ctx.quadraticCurveTo(-33,11+run,-15,6);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#303a4c';ctx.strokeStyle='#111722';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-18,-13,13,30,5);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#d93e70';ctx.beginPath();ctx.moveTo(-17,-9);ctx.lineTo(-10,-14);ctx.lineTo(-4,-9);ctx.lineTo(-9,-3);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#111827';ctx.strokeStyle='#ee426f';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,1);ctx.quadraticCurveTo(-27,4,-39,18+run);ctx.lineTo(-28,2);ctx.lineTo(-37,-1-run);ctx.quadraticCurveTo(-20,-4,-11,-11);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#087f9c';ctx.beginPath();ctx.moveTo(-29,5);ctx.quadraticCurveTo(-17,1,-12,-8);ctx.lineTo(-34,13+run);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#171e2b';ctx.lineWidth=10;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-5,11);ctx.lineTo(-10,24+run);ctx.lineTo(-22,28);ctx.moveTo(6,11);ctx.lineTo(12,22-run);ctx.lineTo(20,27);ctx.stroke();
+  ctx.strokeStyle='#485367';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-5,17);ctx.lineTo(-11,24+run);ctx.moveTo(7,17);ctx.lineTo(12,22-run);ctx.stroke();
+  ctx.fillStyle='#101722';ctx.strokeStyle='#070b11';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-33,24+run,19,9,4);ctx.fill();ctx.stroke();ctx.beginPath();ctx.roundRect(13,23-run,20,10,4);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#556277';ctx.fillRect(-31,29+run,12,2);ctx.fillRect(16,29-run,13,2);
+  ctx.fillStyle='#151d2b';ctx.strokeStyle='#050911';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-12,-14);ctx.lineTo(9,-17);ctx.lineTo(16,6);ctx.lineTo(11,19);ctx.lineTo(4,10);ctx.lineTo(-2,20);ctx.lineTo(-11,11);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#bd2e5b';ctx.beginPath();ctx.moveTo(7,-14);ctx.lineTo(15,-10);ctx.lineTo(12,15);ctx.lineTo(5,8);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#09a9c0';ctx.beginPath();ctx.moveTo(-10,-6);ctx.lineTo(-4,-1);ctx.lineTo(-4,16);ctx.lineTo(-10,10);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#dce4ed';ctx.beginPath();ctx.moveTo(-7,-13);ctx.lineTo(8,-15);ctx.lineTo(5,3);ctx.lineTo(-1,8);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e83b63';ctx.beginPath();ctx.moveTo(-1,-12);ctx.lineTo(3,-13);ctx.lineTo(5,8);ctx.lineTo(1,12);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#202a3b';ctx.strokeStyle='#111722';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(13,-8,7,8,.1,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#17202f';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(7,-10);ctx.lineTo(19,-5+run);ctx.lineTo(25,-1+run);ctx.stroke();
+  ctx.fillStyle='#263244';ctx.beginPath();ctx.roundRect(20,-6+run,10,10,3);ctx.fill();ctx.strokeStyle='#111722';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#ff4264';ctx.fillRect(22,-4+run,5,2);ctx.fillStyle='#37e8f4';ctx.fillRect(18,-9+run,5,3);
+  ctx.fillStyle='#d7a27d';ctx.fillRect(5,-22,9,8);ctx.fillStyle='#e7b98f';ctx.beginPath();ctx.moveTo(5,-33);ctx.lineTo(18,-33);ctx.lineTo(20,-24);ctx.lineTo(14,-18);ctx.lineTo(6,-21);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#151a26';ctx.beginPath();ctx.moveTo(2,-31);ctx.lineTo(5,-41);ctx.lineTo(12,-38);ctx.lineTo(18,-43);ctx.lineTo(23,-35);ctx.lineTo(20,-30);ctx.lineTo(17,-33);ctx.lineTo(14,-29);ctx.lineTo(10,-33);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#22cfe3';ctx.beginPath();ctx.moveTo(16,-39);ctx.lineTo(26,-36);ctx.lineTo(20,-31);ctx.lineTo(17,-33);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#eb345a';ctx.shadowBlur=9;ctx.shadowColor='#ff2a57';ctx.beginPath();ctx.roundRect(8,-31,14,6,2);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#fff1e1';ctx.fillRect(19,-30,2,2);ctx.fillStyle='#171d2a';ctx.fillRect(5,-23,2,3);
+  ctx.strokeStyle='#222b3a';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-8,-9);ctx.lineTo(-16,-2+run);ctx.stroke();
+  ctx.fillStyle='#30394b';ctx.beginPath();ctx.roundRect(-21,-7+run,10,10,3);ctx.fill();ctx.strokeStyle='#141a24';ctx.lineWidth=2;ctx.stroke();
+  ctx.strokeStyle='#ec3e70';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,-13);ctx.lineTo(-2,-17);ctx.lineTo(7,-16);ctx.stroke();
  }
+ if(shieldActive&&shieldTimer>0){ctx.strokeStyle='#74f6ff';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#41e9ff';ctx.beginPath();ctx.ellipse(x+20,y+25,48,42,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
  ctx.restore();
 }
 function draw(){
@@ -250,7 +408,9 @@ function draw(){
  pits.forEach(p=>{const x=p.x-worldX;if(x<W&&x+p.w>0){ctx.fillStyle='#080b13';ctx.fillRect(x,GROUND,p.w,H-GROUND);ctx.fillStyle='#ffb53d';ctx.fillRect(x,GROUND,p.w,5);}});
  platforms.forEach(p=>{const x=p.x-worldX;if(x<W&&x+p.w>0){ctx.fillStyle='#5b6675';ctx.fillRect(x,p.y,p.w,13);ctx.fillStyle='#a9b9c7';ctx.fillRect(x,p.y,p.w,3);}});
  drawParkedTank();coins.forEach(c=>drawCoin(c));enemies.forEach(e=>{if(e.alive)drawEnemy(e);});
- bullets.forEach(b=>{const x=b.x-worldX;ctx.fillStyle='#ffdc65';ctx.fillRect(x,b.y,16,5);});
+ bullets.forEach(b=>{const x=b.x-worldX;ctx.save();ctx.translate(x,b.y);ctx.rotate(Math.atan2(b.vy||0,b.vx));ctx.fillStyle=b.tank?'#ffd767':'#ffdc65';ctx.shadowBlur=b.tank?14:7;ctx.shadowColor=b.tank?'#ffad42':'#ffdc65';ctx.beginPath();ctx.roundRect(-2,-3,b.tank?20:13,6,3);ctx.fill();ctx.restore();});
+ enemyBullets.forEach(b=>{const x=b.x-worldX;ctx.save();ctx.translate(x,b.y);ctx.rotate(Math.atan2(b.vy,b.vx));ctx.fillStyle=b.heavy?'#ff685c':'#ffb15c';ctx.shadowBlur=11;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.ellipse(0,0,b.heavy?8:6,3,0,0,Math.PI*2);ctx.fill();ctx.restore();});
+ if(magnetActive){ctx.save();ctx.strokeStyle='#ff83f3aa';ctx.lineWidth=2;ctx.setLineDash([8,7]);ctx.shadowBlur=14;ctx.shadowColor='#ff56ed';ctx.beginPath();ctx.ellipse(player.x+player.w/2,player.y+player.h/2,105+Math.sin(performance.now()/130)*5,65+Math.cos(performance.now()/150)*4,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
  drawPlayer();
  ctx.fillStyle='#d7e1ed';ctx.font='bold 13px Arial';ctx.textAlign='left';ctx.fillText(tankFound?'TANK: Z ile ateş':'ZED: Z ile vur · SPACE ile zıpla',18,H-18);
 }
@@ -264,6 +424,9 @@ document.addEventListener('keydown',e=>{
  if(e.code==='ArrowRight'||e.code==='KeyD')keys.right=true;
  if(e.code==='ArrowUp'||e.code==='KeyW'||e.code==='Space')keys.jump=true;
  if((e.code==='KeyZ'||e.code==='KeyX')&&!keys.attack){keys.attack=true;if(state==='playing')pressAction('attack');}
+ if(e.code==='KeyQ'&&tankFound){tankAimAngle=Math.max(-.72,tankAimAngle-.08);mouseAim=true;}
+ if(e.code==='KeyE'&&tankFound){tankAimAngle=Math.min(.72,tankAimAngle+.08);mouseAim=true;}
+ if(e.code==='KeyS')useShield();
 });
 document.addEventListener('keyup',e=>{
  if(e.code==='ArrowLeft'||e.code==='KeyA')keys.left=false;
@@ -271,12 +434,14 @@ document.addEventListener('keyup',e=>{
  if(e.code==='ArrowUp'||e.code==='KeyW'||e.code==='Space')keys.jump=false;
  if(e.code==='KeyZ'||e.code==='KeyX')keys.attack=false;
 });
+canvas.addEventListener('pointermove',setTankAimFromPointer);
 canvas.addEventListener('pointerdown',()=>{if(state==='playing')pressAction('attack');});
 document.querySelectorAll('.touchbtn').forEach(b=>{
  const action=b.dataset.key;
  b.addEventListener('pointerdown',e=>{e.preventDefault();keys[action]=true;if(action==='jump'||action==='attack')pressAction(action);});
  ['pointerup','pointerleave','pointercancel'].forEach(type=>b.addEventListener(type,()=>{keys[action]=false;}));
 });
+refreshPowerupPanel();
 document.getElementById('start').addEventListener('click',()=>{document.getElementById('intro').classList.add('hidden');resetGame();});
 document.getElementById('again').addEventListener('click',()=>{document.getElementById('end').classList.add('hidden');resetGame();});
 document.getElementById('hub').addEventListener('click',()=>window.location.href='index.html');
