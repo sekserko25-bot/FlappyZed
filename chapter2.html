@@ -117,7 +117,7 @@ function initZone(){
    platforms.push({x:x+120,w:130+(x%2)*50,y:GROUND-55-(x%3)*22});
    enemies.push({x:x+420,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:Math.random()>.52?'robot':'soldier',dir:-1,alive:true,cool:.7+Math.random()});
    if(x%3===0) enemies.push({x:x+760,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:1,alive:true,cool:1+Math.random()});
-   if(zone>0&&Math.floor((x-900)/1150)%4===1)enemies.push({x:x+900,y:GROUND-58,w:96,h:58,hp:7,maxHp:7,type:'enemyTank',dir:-1,alive:true,cool:1.2+Math.random()});
+   if(zone>0&&Math.floor((x-900)/1150)%4===1)enemies.push({x:x+900,y:GROUND-58,w:120,h:58,hp:7,maxHp:7,type:'enemyTank',dir:-1,alive:true,cool:1.2+Math.random()});
  }
  if(zone===0){
    // Keep the first patrol outside aggro range so players have time to react at spawn.
@@ -294,75 +294,121 @@ function updateHud(){
  document.getElementById('magnetStatus').textContent=magnetActive?Math.ceil(magnetTimer/1000)+'s · '+magnetChargesRemaining:'PASİF';
 }
 function drawBackground(){
- const s=stages[zone],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,s.sky);g.addColorStop(1,'#172331');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
- ctx.fillStyle=s.far;
- for(let i=0;i<12;i++){const x=(i*130-(worldX*.22)%130);const h=75+(i*47%135);ctx.fillRect(x,GROUND-h,75,h);ctx.fillStyle='#ffffff18';ctx.fillRect(x+10,GROUND-h+14,12,10);ctx.fillRect(x+36,GROUND-h+14,12,10);ctx.fillStyle=s.far;}
- ctx.fillStyle='#d8e7dc';for(let i=0;i<4;i++){const x=(i*260-(worldX*.42)%260);ctx.fillRect(x,80,4,45);ctx.fillRect(x-10,80,24,4);}
- ctx.fillStyle='#101821';ctx.fillRect(0,GROUND,W,H-GROUND);ctx.fillStyle=s.ground;ctx.fillRect(0,GROUND,W,18);ctx.fillStyle=s.accent;
- for(let x=0;x<W;x+=70){const sx=(x-(worldX%70));ctx.fillRect(sx,GROUND+20,35,4);}
- // Distant spotlight beams in the opening military zone.
- if(zone===0){ctx.fillStyle='#fff5a011';for(let i=0;i<3;i++){const x=(150+i*360-worldX*.12%700);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x-100,GROUND);ctx.lineTo(x+120,GROUND);ctx.fill();}}
+ const t=performance.now(),stage=stages[zone],sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,'#070a18');sky.addColorStop(.46,stage.sky);sky.addColorStop(1,'#171624');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ // Neon haze above the skyline.
+ for(let i=0;i<4;i++){const gx=(i*310-worldX*.08%1240),col=i%2?'#ff2b8b':'#17e5ff',glow=ctx.createRadialGradient(gx,290,4,gx,290,240);glow.addColorStop(0,col+'33');glow.addColorStop(1,col+'00');ctx.fillStyle=glow;ctx.fillRect(gx-240,30,480,420);}
+ // Distant high-rise silhouettes, each with its own glowing windows.
+ for(let i=-1;i<10;i++){
+  const x=i*145-(worldX*.18%145),seed=(i+30),h=105+(seed*71%185),top=GROUND-h,w=95+(seed*19%42);
+  const tower=ctx.createLinearGradient(x,top,x+w,GROUND);tower.addColorStop(0,'#14213a');tower.addColorStop(.55,'#101829');tower.addColorStop(1,'#202037');
+  ctx.fillStyle=tower;ctx.strokeStyle='#3b557566';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,GROUND);ctx.lineTo(x+2,top+14);ctx.lineTo(x+w*.42,top);ctx.lineTo(x+w-3,top+9);ctx.lineTo(x+w,GROUND);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#203551';ctx.fillRect(x+w*.42,top,w*.16,GROUND-top);
+  for(let row=0;row<7;row++)for(let col=0;col<3;col++){
+   const wx=x+12+col*23,wy=top+23+row*24;if(wy>GROUND-12)continue;
+   ctx.fillStyle=((row+col+seed)%4===0)?'#ff3f9a99':'#45dff477';ctx.shadowBlur=7;ctx.shadowColor=ctx.fillStyle;ctx.fillRect(wx,wy,9,13);ctx.shadowBlur=0;
+  }
+  ctx.strokeStyle='#20e9f6aa';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+w*.43,top);ctx.lineTo(x+w*.43,top-17);ctx.stroke();
+ }
+ // Branded neon ads and security propaganda float between towers.
+ const ads=[['NOVA\nTECH','#27eaff'],['SENTINEL','#ff397f'],['GÜVENLİK\nHER ŞEYDİR','#ffb34c'],['ZED\nARANIYOR','#ff315e'],['NEXA CITY','#55f2d0']];
+ for(let i=-1;i<5;i++){
+  const slot=i*420-(worldX*.34%420),x=slot+42,y=145+(i%2)*73,[label,color]=ads[(i+5)%ads.length];
+  ctx.save();ctx.shadowBlur=18;ctx.shadowColor=color;ctx.fillStyle='#090e1ddd';ctx.strokeStyle=color;ctx.lineWidth=2.2;ctx.beginPath();ctx.roundRect(x,y,164,48,5);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle=color;ctx.font='900 12px Arial';ctx.textAlign='center';ctx.textBaseline='middle';label.split('\n').forEach((line,j)=>ctx.fillText(line,x+82,y+24+(j-(label.split('\n').length-1)/2)*12));ctx.fillStyle='#ffffff77';ctx.fillRect(x+9,y+6,3,36);ctx.restore();
+ }
+ // Sky bridges, antennae, and warning beacons make the city feel occupied.
+ ctx.strokeStyle='#78edf055';ctx.lineWidth=2;
+ for(let i=-1;i<5;i++){const x=i*260-(worldX*.42%260);ctx.beginPath();ctx.moveTo(x,92);ctx.lineTo(x,139);ctx.lineTo(x+48,139);ctx.stroke();ctx.fillStyle='#ff4c87';ctx.shadowBlur=12;ctx.shadowColor='#ff3d82';ctx.fillRect(x-3,88,7,7);ctx.shadowBlur=0;}
+ // Street and neon lane markers.
+ ctx.fillStyle='#090d16';ctx.fillRect(0,GROUND,W,H-GROUND);ctx.fillStyle='#263148';ctx.fillRect(0,GROUND,W,18);
+ const road=ctx.createLinearGradient(0,GROUND,0,H);road.addColorStop(0,'#171d2b');road.addColorStop(1,'#080d17');ctx.fillStyle=road;ctx.fillRect(0,GROUND+18,W,H-GROUND-18);
+ for(let x=0;x<W;x+=70){const sx=x-(worldX%70);ctx.fillStyle='#1deaff';ctx.shadowBlur=8;ctx.shadowColor='#00cfe8';ctx.fillRect(sx,GROUND+22,28,3);ctx.fillStyle='#ed318a';ctx.shadowColor='#ed318a';ctx.fillRect(sx+31,GROUND+22,13,3);ctx.shadowBlur=0;}
+ ctx.fillStyle=stage.ground;ctx.fillRect(0,GROUND,W,9);ctx.fillStyle='#62edfa';ctx.shadowBlur=12;ctx.shadowColor='#24d6f3';ctx.fillRect(0,GROUND,W,2);ctx.shadowBlur=0;
+ if(zone===0){ctx.fillStyle='#ffb24610';for(let i=0;i<3;i++){const x=(150+i*360-worldX*.12%700);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x-100,GROUND);ctx.lineTo(x+120,GROUND);ctx.fill();}}
 }
 function drawCoin(c){const x=c.x-worldX;ctx.save();ctx.fillStyle=c.type.color;ctx.shadowBlur=14;ctx.shadowColor=c.type.color;ctx.beginPath();ctx.arc(x,c.y,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#111';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.type.symbol,x,c.y);ctx.restore();}
 function drawTankModel(x,y,angle,hostile=false,direction=1){
- const hull=hostile?'#795052':'#718c43',shine=hostile?'#c8786b':'#b8cc70',dark=hostile?'#39272c':'#27372a';
- ctx.save();ctx.translate(x,y);if(direction<0){ctx.translate(96,0);ctx.scale(-1,1);}
- ctx.fillStyle='#05080c66';ctx.beginPath();ctx.ellipse(48,54,57,7,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle='#252b2b';ctx.strokeStyle='#929a98';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(0,30,96,27,13);ctx.fill();ctx.stroke();
- for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#59656a':'#46515a';ctx.beginPath();ctx.arc(12+i*10.3,43,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aeb6ac';ctx.beginPath();ctx.arc(12+i*10.3,43,2.6,0,Math.PI*2);ctx.fill();}
- ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(8,29);ctx.lineTo(18,14);ctx.lineTo(78,14);ctx.lineTo(91,29);ctx.lineTo(87,39);ctx.lineTo(11,39);ctx.closePath();ctx.fill();
- ctx.fillStyle=hull;ctx.strokeStyle=dark;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,27);ctx.lineTo(20,11);ctx.lineTo(76,11);ctx.lineTo(91,27);ctx.lineTo(87,36);ctx.lineTo(11,36);ctx.closePath();ctx.fill();ctx.stroke();
- ctx.fillStyle=shine;ctx.beginPath();ctx.moveTo(22,14);ctx.lineTo(31,5);ctx.lineTo(66,5);ctx.lineTo(77,14);ctx.closePath();ctx.fill();
- ctx.save();ctx.translate(49,13);ctx.rotate(direction<0?-angle:angle);
- ctx.fillStyle=dark;ctx.beginPath();ctx.roundRect(-15,-8,32,18,7);ctx.fill();
- ctx.fillStyle=shine;ctx.beginPath();ctx.roundRect(-12,-11,27,15,6);ctx.fill();
- ctx.fillStyle=hull;ctx.beginPath();ctx.roundRect(8,-7,48,7,3);ctx.fill();ctx.fillStyle=dark;ctx.fillRect(43,-8,13,9);
- ctx.fillStyle=hostile?'#ff6f69':'#ff4562';ctx.shadowBlur=10;ctx.shadowColor=ctx.fillStyle;ctx.fillRect(-7,-7,11,4);ctx.shadowBlur=0;
+ const hull=hostile?'#491f36':'#455d4b',armor=hostile?'#982f55':'#6d9c65',edge=hostile?'#ff477d':'#45e9dd',dark='#111722',metal='#323d4c';
+ ctx.save();ctx.translate(x,y);if(direction<0){ctx.translate(120,0);ctx.scale(-1,1);}
+ // Broad powered treads with steel wheels and illuminated suspension.
+ ctx.fillStyle='#030710bb';ctx.beginPath();ctx.ellipse(60,61,72,8,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#151c29';ctx.strokeStyle='#717d8c';ctx.lineWidth=2.5;ctx.beginPath();ctx.roundRect(0,34,120,28,14);ctx.fill();ctx.stroke();
+ for(let i=0;i<9;i++){const wx=10+i*12.5;ctx.fillStyle=i%2?'#475363':'#313d4c';ctx.beginPath();ctx.arc(wx,48,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a5b7bf';ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=edge;ctx.shadowBlur=6;ctx.shadowColor=edge;ctx.beginPath();ctx.arc(wx,48,2.2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+ // Angular sloped glacis and layered reactive armor.
+ ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(8,37);ctx.lineTo(19,16);ctx.lineTo(101,14);ctx.lineTo(117,31);ctx.lineTo(111,45);ctx.lineTo(11,46);ctx.closePath();ctx.fill();
+ const plate=ctx.createLinearGradient(15,15,98,44);plate.addColorStop(0,armor);plate.addColorStop(.48,hull);plate.addColorStop(1,'#273343');
+ ctx.fillStyle=plate;ctx.strokeStyle=hostile?'#d93b67':'#a8df8c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(11,33);ctx.lineTo(23,13);ctx.lineTo(99,12);ctx.lineTo(114,30);ctx.lineTo(108,40);ctx.lineTo(15,41);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle=hostile?'#6d2946':'#577b57';ctx.beginPath();ctx.moveTo(24,16);ctx.lineTo(37,7);ctx.lineTo(86,7);ctx.lineTo(99,17);ctx.lineTo(91,25);ctx.lineTo(32,25);ctx.closePath();ctx.fill();
+ for(let i=0;i<4;i++){const px=25+i*19;ctx.fillStyle=hostile?'#a32f5a':'#7ca967';ctx.beginPath();ctx.moveTo(px,20);ctx.lineTo(px+10,18);ctx.lineTo(px+11,28);ctx.lineTo(px+1,30);ctx.closePath();ctx.fill();ctx.strokeStyle=hostile?'#ff678d':'#b5ee9c';ctx.lineWidth=1;ctx.stroke();}
+ // Turret with rotating shielded barrel and energized muzzle.
+ ctx.save();ctx.translate(61,14);ctx.rotate(direction<0?-angle:angle);
+ ctx.fillStyle='#0a1019';ctx.beginPath();ctx.roundRect(-23,-9,48,24,9);ctx.fill();
+ ctx.fillStyle=metal;ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,2);ctx.lineTo(-14,-12);ctx.lineTo(9,-14);ctx.lineTo(25,-4);ctx.lineTo(21,8);ctx.lineTo(-15,10);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle=armor;ctx.beginPath();ctx.moveTo(-9,-11);ctx.lineTo(8,-12);ctx.lineTo(17,-4);ctx.lineTo(2,-1);ctx.lineTo(-13,-3);ctx.closePath();ctx.fill();
+ ctx.fillStyle=dark;ctx.beginPath();ctx.roundRect(10,-7,58,9,3);ctx.fill();ctx.fillStyle=hostile?'#ca3f66':'#93b987';ctx.fillRect(19,-6,40,4);
+ ctx.fillStyle=metal;ctx.fillRect(57,-9,13,13);ctx.fillStyle=edge;ctx.shadowBlur=13;ctx.shadowColor=edge;ctx.fillRect(68,-7,5,8);ctx.shadowBlur=0;
  ctx.restore();
- ctx.fillStyle=hostile?'#ffb44e':'#5cf3ed';ctx.fillRect(13,23,9,3);ctx.fillRect(75,23,9,3);
- ctx.fillStyle='#151a1e';ctx.font='bold 7px Arial';ctx.textAlign='center';ctx.fillText(hostile?'HOSTILE':'ZED',48,52);ctx.restore();
+ // Sensor mast, rear fuel cylinders, headlights, stencil.
+ ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(100,13);ctx.lineTo(108,2);ctx.lineTo(114,2);ctx.stroke();ctx.fillStyle=edge;ctx.shadowBlur=9;ctx.shadowColor=edge;ctx.beginPath();ctx.arc(114,2,3,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+ ctx.fillStyle=hostile?'#ff426d':'#25e9ee';ctx.shadowBlur=10;ctx.shadowColor=ctx.fillStyle;ctx.fillRect(14,28,12,4);ctx.fillRect(95,28,12,4);ctx.shadowBlur=0;
+ ctx.fillStyle='#080d15';ctx.font='bold 8px Arial';ctx.textAlign='center';ctx.fillText(hostile?'HUNTER 09':'ZED / XR-7',60,57);
+ ctx.restore();
 }
 function drawEnemy(e){
  const x=e.x-worldX,y=e.y;
  if(e.type==='enemyTank'){
   const dx=worldX+player.x+player.w*.5-(e.x+e.w*.5),dy=player.y+player.h*.5-(e.y+18),dir=dx<0?-1:1;
   drawTankModel(x,y,Math.atan2(dy,Math.abs(dx)),true,dir);
-  ctx.fillStyle='#121820';ctx.fillRect(x+7,y-8,82,5);ctx.fillStyle='#ff7770';ctx.fillRect(x+8,y-7,80*Math.max(0,e.hp/e.maxHp),3);return;
+  ctx.fillStyle='#080c15';ctx.fillRect(x+5,y-12,110,7);ctx.fillStyle='#ff477d';ctx.shadowBlur=9;ctx.shadowColor='#ff235f';ctx.fillRect(x+7,y-10,106*Math.max(0,e.hp/e.maxHp),3);ctx.shadowBlur=0;return;
  }
  ctx.save();
+ const pulse=.78+.22*Math.sin(performance.now()/150+e.x);
  if(e.boss){
-  const glow=ctx.createRadialGradient(x+36,y+32,8,x+36,y+32,64);glow.addColorStop(0,'#ff526b77');glow.addColorStop(1,'#ff526b00');ctx.fillStyle=glow;ctx.fillRect(x-30,y-35,130,125);
-  ctx.fillStyle='#211d35';ctx.strokeStyle='#ff5675';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(x-3,y-5,77,72,16);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#71324d';ctx.beginPath();ctx.roundRect(x+8,y+8,56,35,10);ctx.fill();
-  ctx.fillStyle='#ffda94';ctx.fillRect(x+14,y+18,19,8);ctx.fillRect(x+43,y+18,15,8);
-  ctx.fillStyle='#211d35';ctx.fillRect(x+17,y+20,12,4);ctx.fillRect(x+46,y+20,9,4);
-  ctx.fillStyle='#ed4266';ctx.beginPath();ctx.moveTo(x+14,y+42);ctx.lineTo(x+58,y+42);ctx.lineTo(x+50,y+53);ctx.lineTo(x+22,y+53);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#111';ctx.fillRect(x,y-28,78,7);ctx.fillStyle='#ff4d70';ctx.fillRect(x,y-28,78*Math.max(0,e.hp/e.maxHp),7);
-  ctx.fillStyle='#fff';ctx.font='bold 11px Arial';ctx.textAlign='left';ctx.fillText('COMMANDER',x-8,y-34);
+  const glow=ctx.createRadialGradient(x+39,y+35,6,x+39,y+35,88);glow.addColorStop(0,'#ff386c88');glow.addColorStop(1,'#ff386c00');ctx.fillStyle=glow;ctx.fillRect(x-45,y-46,170,160);
+  // Elite commander: angular helmet, plated shoulders and a neon command crest.
+  ctx.fillStyle='#0b101b';ctx.strokeStyle='#ff397b';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+4,y+10);ctx.lineTo(x+12,y-1);ctx.lineTo(x+28,y-6);ctx.lineTo(x+52,y-6);ctx.lineTo(x+70,y+5);ctx.lineTo(x+77,y+26);ctx.lineTo(x+70,y+60);ctx.lineTo(x+60,y+70);ctx.lineTo(x+13,y+70);ctx.lineTo(x-1,y+53);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#263449';ctx.beginPath();ctx.moveTo(x+2,y+23);ctx.lineTo(x-12,y+32);ctx.lineTo(x+5,y+47);ctx.lineTo(x+20,y+43);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+67,y+23);ctx.lineTo(x+84,y+31);ctx.lineTo(x+73,y+49);ctx.lineTo(x+58,y+43);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#50223f';ctx.beginPath();ctx.moveTo(x+13,y+9);ctx.lineTo(x+25,y+2);ctx.lineTo(x+55,y+2);ctx.lineTo(x+68,y+12);ctx.lineTo(x+65,y+35);ctx.lineTo(x+56,y+43);ctx.lineTo(x+20,y+43);ctx.lineTo(x+11,y+31);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ffdf9a';ctx.shadowBlur=10;ctx.shadowColor='#ff537e';ctx.fillRect(x+17,y+19,18,8);ctx.fillRect(x+45,y+19,17,8);ctx.shadowBlur=0;ctx.fillStyle='#170e20';ctx.fillRect(x+20,y+21,13,4);ctx.fillRect(x+48,y+21,12,4);
+  ctx.fillStyle='#ff376e';ctx.beginPath();ctx.moveTo(x+20,y+39);ctx.lineTo(x+60,y+39);ctx.lineTo(x+52,y+52);ctx.lineTo(x+27,y+52);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e8d9ee';ctx.fillRect(x+36,y+44,8,4);ctx.fillStyle='#ff3677';ctx.shadowBlur=15;ctx.shadowColor='#ff3677';ctx.beginPath();ctx.moveTo(x+38,y+52);ctx.lineTo(x+44,y+61);ctx.lineTo(x+38,y+67);ctx.lineTo(x+32,y+61);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#101522';ctx.fillRect(x+8,y+67,19,15);ctx.fillRect(x+51,y+67,19,15);ctx.fillStyle='#1ce7f4';ctx.fillRect(x+10,y+70,15,3);ctx.fillRect(x+53,y+70,15,3);
+  ctx.fillStyle='#111';ctx.fillRect(x-2,y-19,82,7);ctx.fillStyle='#ff477d';ctx.fillRect(x,y-17,78*Math.max(0,e.hp/e.maxHp),3);
+  ctx.fillStyle='#ffb3d0';ctx.font='900 10px Arial';ctx.textAlign='left';ctx.fillText('NEXA ENFORCER',x-3,y-25);
  }else if(e.type==='soldier'){
-  const stride=Math.sin(performance.now()/95+e.x)*2;ctx.lineCap='round';
-  ctx.strokeStyle='#222936';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x+17,y+34);ctx.lineTo(x+15+stride,y+47);ctx.moveTo(x+26,y+34);ctx.lineTo(x+29-stride,y+47);ctx.stroke();
-  ctx.fillStyle='#263039';ctx.beginPath();ctx.roundRect(x+7,y+13,30,27,7);ctx.fill();
-  ctx.fillStyle='#53694d';ctx.beginPath();ctx.roundRect(x+9,y+15,25,23,5);ctx.fill();
-  ctx.fillStyle='#758d59';ctx.fillRect(x+11,y+20,21,4);ctx.fillStyle='#18222a';ctx.fillRect(x+17,y+23,12,12);
-  ctx.fillStyle='#1b252d';ctx.beginPath();ctx.arc(x+21,y+8,11,Math.PI,Math.PI*2);ctx.lineTo(x+32,y+14);ctx.lineTo(x+10,y+14);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#c9a180';ctx.fillRect(x+14,y+8,15,10);ctx.fillStyle='#252d3a';ctx.fillRect(x+9,y+5,24,7);ctx.fillStyle='#e4bd6d';ctx.fillRect(x+17,y+6,9,3);
-  ctx.fillStyle='#d44359';ctx.shadowBlur=7;ctx.shadowColor='#f04b61';ctx.fillRect(x+15,y+12,15,4);ctx.shadowBlur=0;
-  ctx.fillStyle='#323b49';ctx.beginPath();ctx.roundRect(x+27,y+21,25,5,2);ctx.fill();ctx.fillStyle='#c3d1d7';ctx.fillRect(x+44,y+22,10,2);
+  const stride=Math.sin(performance.now()/95+e.x)*2,cy=y+Math.sin(performance.now()/180+e.x)*.5;ctx.lineCap='round';
+  // Reinforced boots and articulated leg armor.
+  ctx.strokeStyle='#151b29';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(x+16,cy+34);ctx.lineTo(x+14+stride,cy+47);ctx.lineTo(x+8+stride,cy+49);ctx.moveTo(x+29,cy+34);ctx.lineTo(x+31-stride,cy+47);ctx.lineTo(x+37-stride,cy+49);ctx.stroke();
+  ctx.fillStyle='#c33169';ctx.fillRect(x+5+stride,cy+47,13,4);ctx.fillRect(x+30-stride,cy+47,13,4);
+  // Broad tactical armor, illuminated chest insignia, shoulder plates.
+  ctx.fillStyle='#101725';ctx.strokeStyle='#ff477f';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+11,cy+13);ctx.lineTo(x+29,cy+11);ctx.lineTo(x+38,cy+20);ctx.lineTo(x+35,cy+39);ctx.lineTo(x+9,cy+39);ctx.lineTo(x+5,cy+21);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#394052';ctx.beginPath();ctx.moveTo(x+9,cy+17);ctx.lineTo(x+1,cy+20);ctx.lineTo(x+4,cy+29);ctx.lineTo(x+12,cy+27);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+33,cy+17);ctx.lineTo(x+41,cy+20);ctx.lineTo(x+39,cy+29);ctx.lineTo(x+32,cy+27);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#566276';ctx.beginPath();ctx.moveTo(x+13,cy+17);ctx.lineTo(x+29,cy+16);ctx.lineTo(x+32,cy+34);ctx.lineTo(x+12,cy+34);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e5c27f';ctx.fillRect(x+18,cy+21,9,3);ctx.fillStyle='#ff3c82';ctx.shadowBlur=9*pulse;ctx.shadowColor='#ff2879';ctx.fillRect(x+17,cy+28,11,3);ctx.shadowBlur=0;
+  // Hooded helmet with angular red visor.
+  ctx.fillStyle='#111724';ctx.beginPath();ctx.moveTo(x+8,cy+13);ctx.lineTo(x+8,cy+4);ctx.lineTo(x+15,cy-2);ctx.lineTo(x+28,cy-3);ctx.lineTo(x+36,cy+4);ctx.lineTo(x+35,cy+14);ctx.lineTo(x+29,cy+17);ctx.lineTo(x+13,cy+16);ctx.closePath();ctx.fill();ctx.strokeStyle='#748096';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#c8a384';ctx.fillRect(x+14,cy+7,16,10);ctx.fillStyle='#ff397b';ctx.shadowBlur=12*pulse;ctx.shadowColor='#ff246f';ctx.beginPath();ctx.moveTo(x+11,cy+7);ctx.lineTo(x+32,cy+8);ctx.lineTo(x+30,cy+13);ctx.lineTo(x+13,cy+12);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+  // Energy rifle, red sight and cyan power cell.
+  ctx.save();ctx.translate(x+34,cy+23);ctx.rotate(-.06);ctx.fillStyle='#0c121e';ctx.beginPath();ctx.roundRect(-2,-4,28,8,2);ctx.fill();ctx.fillStyle='#536175';ctx.fillRect(3,-3,16,5);ctx.fillStyle='#ff397b';ctx.shadowBlur=8;ctx.shadowColor='#ff397b';ctx.fillRect(18,-2,9,3);ctx.shadowBlur=0;ctx.fillStyle='#30eaff';ctx.fillRect(4,3,7,2);ctx.restore();
  }else{
-  const bob=Math.sin(performance.now()/120+e.x)*2;ctx.fillStyle='#202c3b';ctx.beginPath();ctx.roundRect(x+7,y+31+bob,26,15,6);ctx.fill();
-  ctx.fillStyle='#627587';ctx.beginPath();ctx.roundRect(x+8,y+7+bob,26,28,7);ctx.fill();
-  ctx.fillStyle='#99b5c5';ctx.beginPath();ctx.roundRect(x+12,y+2+bob,19,11,6);ctx.fill();
-  ctx.fillStyle='#10212d';ctx.fillRect(x+11,y+13+bob,21,11);
-  ctx.fillStyle='#5af2ff';ctx.shadowBlur=10;ctx.shadowColor='#35e7ff';ctx.fillRect(x+12,y+15+bob,8,5);ctx.fillRect(x+24,y+15+bob,8,5);ctx.shadowBlur=0;
-  ctx.fillStyle='#d94b70';ctx.fillRect(x+18,y+24+bob,8,3);
-  ctx.strokeStyle='#99b5c5';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x+10,y+19+bob);ctx.lineTo(x+3,y+31+bob);ctx.moveTo(x+31,y+20+bob);ctx.lineTo(x+38,y+28+bob);ctx.stroke();
-  ctx.fillStyle='#b5c4d1';ctx.fillRect(x+3,y+29+bob,8,4);ctx.fillRect(x+33,y+27+bob,8,4);
-  ctx.fillStyle='#65eaf2';ctx.fillRect(x+17,y-3+bob,3,8);ctx.fillRect(x+19,y-5+bob,8,3);
+  const bob=Math.sin(performance.now()/120+e.x)*2,cy=y+bob;
+  // Compact autonomous sentinel droid with shielded core and piston limbs.
+  const aura=ctx.createRadialGradient(x+22,cy+23,4,x+22,cy+23,43);aura.addColorStop(0,'#16ddff55');aura.addColorStop(1,'#16ddff00');ctx.fillStyle=aura;ctx.fillRect(x-18,cy-14,82,82);
+  ctx.strokeStyle='#64788c';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x+10,cy+25);ctx.lineTo(x+3,cy+39);ctx.lineTo(x+8,cy+44);ctx.moveTo(x+33,cy+25);ctx.lineTo(x+41,cy+37);ctx.lineTo(x+36,cy+44);ctx.stroke();
+  ctx.fillStyle='#1a2535';ctx.strokeStyle='#31eaff';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(x+6,cy+7,33,29,7);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#5d7085';ctx.beginPath();ctx.moveTo(x+9,cy+13);ctx.lineTo(x+13,cy+4);ctx.lineTo(x+32,cy+4);ctx.lineTo(x+37,cy+13);ctx.lineTo(x+34,cy+27);ctx.lineTo(x+12,cy+27);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#081c2a';ctx.fillRect(x+11,cy+13,25,10);ctx.fillStyle='#48edff';ctx.shadowBlur=12*pulse;ctx.shadowColor='#26eaff';ctx.fillRect(x+13,cy+15,8,4);ctx.fillRect(x+26,cy+15,8,4);ctx.shadowBlur=0;
+  ctx.fillStyle='#ed4a86';ctx.beginPath();ctx.moveTo(x+19,cy+25);ctx.lineTo(x+30,cy+25);ctx.lineTo(x+27,cy+29);ctx.lineTo(x+21,cy+29);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#9fb5c8';ctx.fillRect(x+14,cy+31,18,3);ctx.fillStyle='#ff477d';ctx.shadowBlur=9;ctx.shadowColor='#ff477d';ctx.fillRect(x+19,cy+37,8,3);ctx.shadowBlur=0;
+  ctx.fillStyle='#b7c7d8';ctx.fillRect(x+1,cy+42,11,4);ctx.fillRect(x+34,cy+42,11,4);
  }
- if(!e.boss){ctx.fillStyle='#101923';ctx.fillRect(x+2,y-7,35,5);ctx.fillStyle=e.type==='soldier'?'#8ce583':'#50eaff';ctx.fillRect(x+3,y-6,33*Math.max(0,e.hp/e.maxHp),3);}
+ if(!e.boss){const bw=e.type==='soldier'?43:47;ctx.fillStyle='#080e18';ctx.fillRect(x-1,y-10,bw,5);ctx.fillStyle=e.type==='soldier'?'#ff477d':'#37edff';ctx.shadowBlur=7;ctx.shadowColor=ctx.fillStyle;ctx.fillRect(x,y-9,(bw-2)*Math.max(0,e.hp/e.maxHp),3);ctx.shadowBlur=0;}
  ctx.restore();
-}function drawParkedTank(){
+}
+function drawParkedTank(){
  if(zone!==0||tankFound)return;
  const x=1400-worldX,y=GROUND-57;if(x<-120||x>W+120)return;
  drawTankModel(x,y,0,false);ctx.save();ctx.fillStyle='#fff2a8';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText('TANKI ELE GEÇİR',x+48,y-7);ctx.restore();
