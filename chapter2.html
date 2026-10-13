@@ -141,14 +141,14 @@ function movePlayer(dt){
  if(keys.jump&&player.grounded)pressAction('jump');
  player.vy+=.52*dt*60;player.y+=player.vy*dt*60;player.grounded=false;
  for(const p of platforms){
-   const sx=p.x-worldX+player.x;
+   const sx=p.x-worldX;
    if(sx+ p.w>player.x&&sx<player.x+player.w&&prevBottom<=p.y&&player.y+player.h>=p.y&&player.vy>=0){
     player.y=p.y-player.h;player.vy=0;player.grounded=true;
    }
  }
  if(player.y+player.h>=GROUND&&!inPit(worldX+player.x)){player.y=GROUND-player.h;player.vy=0;player.grounded=true;}
  if(player.y>H+45){damagePlayer();player.y=GROUND-player.h;player.vy=0;worldX=Math.max(0,worldX-150);}
- if(worldX>ZONE_LENGTH-1300&&enemies.some(e=>e.boss&&e.alive)){worldX=ZONE_LENGTH-1300;player.x=Math.min(player.x,W*.55);}
+ if(worldX>ZONE_LENGTH-1368&&enemies.some(e=>e.boss&&e.alive)){worldX=ZONE_LENGTH-1368;player.x=Math.min(player.x,W*.55);}
  if(worldX>=ZONE_LENGTH-350&&!enemies.some(e=>e.boss&&e.alive)){nextZone();}
 }
 function update(dt){
@@ -165,9 +165,8 @@ function update(dt){
  bullets=bullets.filter(b=>b.life>0);
  coins.forEach(c=>{if(c.alive&&Math.abs(c.x-(worldX+player.x+player.w/2))<32&&Math.abs(c.y-(player.y+player.h/2))<38){c.alive=false;coinCount++;score+=c.type.value;lastCoinLabel=c.type.name;showMessage('+'+c.type.value+' '+c.type.name+' COIN',650);}});
  coins=coins.filter(c=>c.alive);
- if(!tankFound&&zone===0&&worldX>1350){tankFound=true;tankArmor=5;showMessage('TANKI ELE GEÇİRDİN! Z ile ateş et, düşmanları aş.',2800);}
+ if(!tankFound&&zone===0&&worldX+player.x>1350){tankFound=true;tankArmor=5;showMessage('TANKI ELE GEÇİRDİN! Z ile ateş et, düşmanları aş.',2800);}
  if(messageTimer>0){messageTimer-=dt*1000;if(messageTimer<=0)document.getElementById('message').classList.remove('show');}
- if(zone===0&&worldX>1450&&!tankFound)worldX=1350;
  updateHud();
 }
 function nextZone(){
@@ -207,9 +206,9 @@ function drawBackground(){
  // Distant spotlight beams in the opening military zone.
  if(zone===0){ctx.fillStyle='#fff5a011';for(let i=0;i<3;i++){const x=(150+i*360-worldX*.12%700);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x-100,GROUND);ctx.lineTo(x+120,GROUND);ctx.fill();}}
 }
-function drawCoin(c){const x=c.x-worldX+player.x;ctx.save();ctx.fillStyle=c.type.color;ctx.shadowBlur=14;ctx.shadowColor=c.type.color;ctx.beginPath();ctx.arc(x,c.y,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#111';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.type.symbol,x,c.y);ctx.restore();}
+function drawCoin(c){const x=c.x-worldX;ctx.save();ctx.fillStyle=c.type.color;ctx.shadowBlur=14;ctx.shadowColor=c.type.color;ctx.beginPath();ctx.arc(x,c.y,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#111';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.type.symbol,x,c.y);ctx.restore();}
 function drawEnemy(e){
- const x=e.x-worldX+player.x,y=e.y;
+ const x=e.x-worldX,y=e.y;
  ctx.save();
  if(e.boss){ctx.fillStyle='#421f35';ctx.fillRect(x-12,y-8,96,83);ctx.fillStyle='#ef456e';ctx.fillRect(x+4,y+8,64,22);ctx.fillStyle='#ffe4b0';ctx.fillRect(x+20,y+35,34,19);ctx.fillStyle='#111';ctx.fillRect(x+22,y+40,9,5);ctx.fillRect(x+43,y+40,9,5);ctx.fillStyle='#ff536f';ctx.fillRect(x+14,y+57,54,9);ctx.fillStyle='#fff';ctx.font='bold 12px Arial';ctx.fillText('COMMANDER',x-10,y-14);
  }else if(e.type==='soldier'){ctx.fillStyle='#546b43';ctx.fillRect(x+8,y+14,23,25);ctx.fillStyle='#c79e72';ctx.fillRect(x+10,y,19,17);ctx.fillStyle='#394c34';ctx.fillRect(x+7,y-3,25,8);ctx.fillStyle='#222';ctx.fillRect(x+26,y+20,22,5);ctx.fillRect(x+9,y+38,8,13);ctx.fillRect(x+24,y+38,8,13);
@@ -220,7 +219,7 @@ function drawEnemy(e){
 }
 function drawParkedTank(){
  if(zone!==0||tankFound)return;
- const x=1400-worldX+player.x,y=GROUND-45;
+ const x=1400-worldX,y=GROUND-45;
  if(x<-100||x>W+100)return;
  ctx.fillStyle='#657a3b';ctx.fillRect(x,y+14,82,27);
  ctx.fillStyle='#34412d';for(let i=0;i<7;i++){ctx.beginPath();ctx.arc(x+5+i*11,y+42,6,0,Math.PI*2);ctx.fill();}
@@ -246,10 +245,10 @@ function drawPlayer(){
 }
 function draw(){
  drawBackground();
- pits.forEach(p=>{const x=p.x-worldX+player.x;if(x<W&&x+p.w>0){ctx.fillStyle='#080b13';ctx.fillRect(x,GROUND,p.w,H-GROUND);ctx.fillStyle='#ffb53d';ctx.fillRect(x,GROUND,p.w,5);}});
+ pits.forEach(p=>{const x=p.x-worldX;if(x<W&&x+p.w>0){ctx.fillStyle='#080b13';ctx.fillRect(x,GROUND,p.w,H-GROUND);ctx.fillStyle='#ffb53d';ctx.fillRect(x,GROUND,p.w,5);}});
  platforms.forEach(p=>{const x=p.x-worldX+player.x;if(x<W&&x+p.w>0){ctx.fillStyle='#5b6675';ctx.fillRect(x,p.y,p.w,13);ctx.fillStyle='#a9b9c7';ctx.fillRect(x,p.y,p.w,3);}});
  drawParkedTank();coins.forEach(c=>drawCoin(c));enemies.forEach(e=>{if(e.alive)drawEnemy(e);});
- bullets.forEach(b=>{const x=b.x-worldX+player.x;ctx.fillStyle='#ffdc65';ctx.fillRect(x,b.y,16,5);});
+ bullets.forEach(b=>{const x=b.x-worldX;ctx.fillStyle='#ffdc65';ctx.fillRect(x,b.y,16,5);});
  drawPlayer();
  ctx.fillStyle='#d7e1ed';ctx.font='bold 13px Arial';ctx.textAlign='left';ctx.fillText(tankFound?'TANK: Z ile ateş':'ZED: Z ile vur · SPACE ile zıpla',18,H-18);
 }
