@@ -225,9 +225,10 @@ function update(dt){
   if(e.type!=='enemyTank'&&Math.abs(delta)<430){e.x+=Math.sign(delta)*Math.min(Math.abs(delta),.5*dt*60);e.dir=Math.sign(delta)||e.dir;}
   const reach=e.type==='enemyTank'?68:(e.boss?60:35);
   if(Math.abs(delta)<reach&&Math.abs(player.y-e.y)<(e.type==='enemyTank'?65:60))damagePlayer();
-  if(Math.abs(delta)<620&&Math.abs(delta)>115&&e.cool<=0){
+  const fireRange=e.type==='enemyTank'?760:e.boss?620:380;
+  if(Math.abs(delta)<fireRange&&Math.abs(delta)>115&&e.cool<=0){
    fireEnemyShot(e,playerWorld);
-   e.cool=e.type==='enemyTank'?1.6+Math.random()*.6:e.boss?1.8+Math.random()*.8:1.65+Math.random()*.75;
+   e.cool=e.type==='enemyTank'?1.9+Math.random()*.7:e.boss?2+Math.random()*.8:1.9+Math.random()*.8;
   }
   if(e.boss&&Math.abs(delta)<420&&Math.random()<.012){coins.push({x:e.x-60,y:GROUND-150-Math.random()*90,r:12,type:coinTypes[Math.floor(Math.random()*coinTypes.length)],alive:true});}
  });
