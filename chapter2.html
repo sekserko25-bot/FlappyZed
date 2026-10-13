@@ -53,6 +53,7 @@ button{border:0;border-radius:9px;background:linear-gradient(90deg,#45eaf4,#6aff
  <div class="touchgroup"><button class="touchbtn" data-key="jump">⬆</button><button class="touchbtn" data-key="attack">⚡</button></div>
 </div>
 </div>
+<script src="zed-character.js"></script>
 <script>
 (function(){
 'use strict';
@@ -112,7 +113,7 @@ function initZone(){
  player={x:120,y:GROUND-52,w:42,h:52,vy:0,grounded:true,face:1,attack:0};
  enemies=[];coins=[];platforms=[];pits=[];
  for(let x=900;x<ZONE_LENGTH-1100;x+=1150){
-   if(x>2800 && x%4!==0) pits.push({x:x+300,w:150+(x%3)*35});
+   // This chapter uses continuous ground; pits were removed for fair jumps.
    platforms.push({x:x+120,w:130+(x%2)*50,y:GROUND-55-(x%3)*22});
    enemies.push({x:x+420,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:Math.random()>.52?'robot':'soldier',dir:-1,alive:true,cool:.7+Math.random()});
    if(x%3===0) enemies.push({x:x+760,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:1,alive:true,cool:1+Math.random()});
@@ -367,41 +368,16 @@ function drawEnemy(e){
  drawTankModel(x,y,0,false);ctx.save();ctx.fillStyle='#fff2a8';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText('TANKI ELE GEÇİR',x+48,y-7);ctx.restore();
 }
 function drawPlayer(){
- const x=player.x,y=player.y,now=performance.now(),run=Math.sin(now/75)*1.8;
- ctx.save();if(invulnerable>0&&Math.floor(invulnerable*12)%2)ctx.globalAlpha=.45;
- if(tankFound){
-  drawTankModel(x-27,y-5,tankAimAngle,false,tankAimDirection);
- }else{
-  ctx.translate(x+21,y+27);ctx.scale(1.14,1.14);
-  const flame=ctx.createLinearGradient(-17,4,-40,4);flame.addColorStop(0,'#fff6b6');flame.addColorStop(.3,'#ffb039');flame.addColorStop(1,'#f64c36');
-  ctx.fillStyle=flame;ctx.shadowBlur=12;ctx.shadowColor='#ff7338';ctx.beginPath();ctx.moveTo(-15,0);ctx.quadraticCurveTo(-35,-5-run,-42,3);ctx.quadraticCurveTo(-33,11+run,-15,6);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#303a4c';ctx.strokeStyle='#111722';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-18,-13,13,30,5);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#d93e70';ctx.beginPath();ctx.moveTo(-17,-9);ctx.lineTo(-10,-14);ctx.lineTo(-4,-9);ctx.lineTo(-9,-3);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#111827';ctx.strokeStyle='#ee426f';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,1);ctx.quadraticCurveTo(-27,4,-39,18+run);ctx.lineTo(-28,2);ctx.lineTo(-37,-1-run);ctx.quadraticCurveTo(-20,-4,-11,-11);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle='#087f9c';ctx.beginPath();ctx.moveTo(-29,5);ctx.quadraticCurveTo(-17,1,-12,-8);ctx.lineTo(-34,13+run);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='#171e2b';ctx.lineWidth=10;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-5,11);ctx.lineTo(-10,24+run);ctx.lineTo(-22,28);ctx.moveTo(6,11);ctx.lineTo(12,22-run);ctx.lineTo(20,27);ctx.stroke();
-  ctx.strokeStyle='#485367';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-5,17);ctx.lineTo(-11,24+run);ctx.moveTo(7,17);ctx.lineTo(12,22-run);ctx.stroke();
-  ctx.fillStyle='#101722';ctx.strokeStyle='#070b11';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-33,24+run,19,9,4);ctx.fill();ctx.stroke();ctx.beginPath();ctx.roundRect(13,23-run,20,10,4);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#556277';ctx.fillRect(-31,29+run,12,2);ctx.fillRect(16,29-run,13,2);
-  ctx.fillStyle='#151d2b';ctx.strokeStyle='#050911';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-12,-14);ctx.lineTo(9,-17);ctx.lineTo(16,6);ctx.lineTo(11,19);ctx.lineTo(4,10);ctx.lineTo(-2,20);ctx.lineTo(-11,11);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle='#bd2e5b';ctx.beginPath();ctx.moveTo(7,-14);ctx.lineTo(15,-10);ctx.lineTo(12,15);ctx.lineTo(5,8);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#09a9c0';ctx.beginPath();ctx.moveTo(-10,-6);ctx.lineTo(-4,-1);ctx.lineTo(-4,16);ctx.lineTo(-10,10);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#dce4ed';ctx.beginPath();ctx.moveTo(-7,-13);ctx.lineTo(8,-15);ctx.lineTo(5,3);ctx.lineTo(-1,8);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#e83b63';ctx.beginPath();ctx.moveTo(-1,-12);ctx.lineTo(3,-13);ctx.lineTo(5,8);ctx.lineTo(1,12);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#202a3b';ctx.strokeStyle='#111722';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(13,-8,7,8,.1,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='#17202f';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(7,-10);ctx.lineTo(19,-5+run);ctx.lineTo(25,-1+run);ctx.stroke();
-  ctx.fillStyle='#263244';ctx.beginPath();ctx.roundRect(20,-6+run,10,10,3);ctx.fill();ctx.strokeStyle='#111722';ctx.lineWidth=2;ctx.stroke();
-  ctx.fillStyle='#ff4264';ctx.fillRect(22,-4+run,5,2);ctx.fillStyle='#37e8f4';ctx.fillRect(18,-9+run,5,3);
-  ctx.fillStyle='#d7a27d';ctx.fillRect(5,-22,9,8);ctx.fillStyle='#e7b98f';ctx.beginPath();ctx.moveTo(5,-33);ctx.lineTo(18,-33);ctx.lineTo(20,-24);ctx.lineTo(14,-18);ctx.lineTo(6,-21);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#151a26';ctx.beginPath();ctx.moveTo(2,-31);ctx.lineTo(5,-41);ctx.lineTo(12,-38);ctx.lineTo(18,-43);ctx.lineTo(23,-35);ctx.lineTo(20,-30);ctx.lineTo(17,-33);ctx.lineTo(14,-29);ctx.lineTo(10,-33);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#22cfe3';ctx.beginPath();ctx.moveTo(16,-39);ctx.lineTo(26,-36);ctx.lineTo(20,-31);ctx.lineTo(17,-33);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#eb345a';ctx.shadowBlur=9;ctx.shadowColor='#ff2a57';ctx.beginPath();ctx.roundRect(8,-31,14,6,2);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#fff1e1';ctx.fillRect(19,-30,2,2);ctx.fillStyle='#171d2a';ctx.fillRect(5,-23,2,3);
-  ctx.strokeStyle='#222b3a';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-8,-9);ctx.lineTo(-16,-2+run);ctx.stroke();
-  ctx.fillStyle='#30394b';ctx.beginPath();ctx.roundRect(-21,-7+run,10,10,3);ctx.fill();ctx.strokeStyle='#141a24';ctx.lineWidth=2;ctx.stroke();
-  ctx.strokeStyle='#ec3e70';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,-13);ctx.lineTo(-2,-17);ctx.lineTo(7,-16);ctx.stroke();
+ const x=player.x+player.w/2,y=player.y+player.h-45,now=performance.now();
+ ctx.save();if(player.face<0){ctx.translate(x*2,0);ctx.scale(-1,1);}
+ if(invulnerable>0&&Math.floor(invulnerable*12)%2)ctx.globalAlpha=.45;
+ if(tankFound)drawTankModel(player.x-27,player.y-5,tankAimAngle,false,tankAimDirection);
+ else{
+  // Reuse the exact full-body manga Zed artwork from chapter one.
+  window.ctx=ctx;window.shieldActive=shieldActive;
+  if(window.drawZed)window.drawZed(x,y,Math.sin(now/230)*.12,1,now);
  }
- if(shieldActive&&shieldTimer>0){ctx.strokeStyle='#74f6ff';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#41e9ff';ctx.beginPath();ctx.ellipse(x+20,y+25,48,42,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
+ if(shieldActive&&shieldTimer>0){ctx.strokeStyle='#74f6ff';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#41e9ff';ctx.beginPath();ctx.ellipse(player.x+20,player.y+25,48,42,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
  ctx.restore();
 }
 function draw(){
