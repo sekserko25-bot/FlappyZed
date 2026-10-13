@@ -12,8 +12,8 @@ canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background
 .hudbox{background:#0b1222d9;border:1px solid #5a6e89;border-radius:8px;padding:8px 10px}.cyan{color:#66f5ff}.gold{color:#ffd45a}
 #message{position:absolute;top:76px;left:50%;transform:translateX(-50%);padding:9px 16px;border:1px solid #ffd45a;background:#111827e8;color:#fff5c7;font-weight:bold;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
 #message.show{opacity:1}
-.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(135deg,#050914ed,#101b2ee8);text-align:center}
-.overlay.hidden{display:none}.panel{max-width:700px;max-height:calc(100vh - 28px);overflow:auto;background:#101a2bed;border:1px solid #43dce7;border-radius:16px;padding:25px;box-shadow:0 0 35px #00d9ff26}
+.overlay{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:22px;background:linear-gradient(135deg,#050914ed,#101b2ee8);text-align:center}
+.overlay.hidden{display:none}.panel{max-width:700px;max-height:100%;margin:auto;overflow:auto;background:#101a2bed;border:1px solid #43dce7;border-radius:16px;padding:25px;box-shadow:0 0 35px #00d9ff26}
 h1{margin:0 0 8px;color:#64f5ff;font-size:clamp(24px,5vw,42px);text-shadow:0 0 18px #00c9ff66}
 h2{color:#ffd45a;margin:8px}.story{font-size:clamp(14px,2vw,18px);line-height:1.55;color:#d7dfef}
 .controls{margin:15px 0;color:#aebbd0;font-size:13px;line-height:1.8}
