@@ -13,7 +13,7 @@ canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background
 #message{position:absolute;top:76px;left:50%;transform:translateX(-50%);padding:9px 16px;border:1px solid #ffd45a;background:#111827e8;color:#fff5c7;font-weight:bold;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
 #message.show{opacity:1}
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(135deg,#050914ed,#101b2ee8);text-align:center}
-.overlay.hidden{display:none}.panel{max-width:700px;background:#101a2bed;border:1px solid #43dce7;border-radius:16px;padding:25px;box-shadow:0 0 35px #00d9ff26}
+.overlay.hidden{display:none}.panel{max-width:700px;max-height:calc(100vh - 28px);overflow:auto;background:#101a2bed;border:1px solid #43dce7;border-radius:16px;padding:25px;box-shadow:0 0 35px #00d9ff26}
 h1{margin:0 0 8px;color:#64f5ff;font-size:clamp(24px,5vw,42px);text-shadow:0 0 18px #00c9ff66}
 h2{color:#ffd45a;margin:8px}.story{font-size:clamp(14px,2vw,18px);line-height:1.55;color:#d7dfef}
 .controls{margin:15px 0;color:#aebbd0;font-size:13px;line-height:1.8}
@@ -23,6 +23,7 @@ button{border:0;border-radius:9px;background:linear-gradient(90deg,#45eaf4,#6aff
 .touchgroup{display:flex;gap:8px}.touchbtn{pointer-events:auto;touch-action:none;opacity:.8;padding:12px 15px;border-radius:12px;background:#101a2bd9;border:1px solid #70eefa;color:white;font-size:18px}
 .inventory-line{margin:10px auto;padding:10px;border:1px solid #526782;border-radius:10px;background:#09101dcc;color:#dce9ff;font-size:14px}
 .inventory-line input{width:54px;padding:5px;border:1px solid #52dce8;border-radius:6px;background:#0b1222;color:#fff;text-align:center;font-weight:bold}
+.shop-heading{margin:10px 0 7px;color:#7df6ff;font-size:12px;font-weight:900;letter-spacing:.08em}.shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.shop-card{display:grid;gap:5px;justify-items:center;padding:9px 5px;border:1px solid #48647e;border-radius:10px;background:linear-gradient(145deg,#17263a,#0b1423);color:#dce9ff;font-size:12px;font-weight:800}.shop-card button{padding:7px 10px;font-size:12px;background:linear-gradient(90deg,#35cfe1,#55edb2)}.shop-note{color:#9db0c7;font-size:11px}@media(max-width:500px){.panel{padding:15px}.shop-grid{gap:5px}.shop-card{font-size:10px}.shop-card button{padding:7px 5px;font-size:10px}}
 @media(max-width:700px){#hud{font-size:11px;inset:6px}.hudbox{padding:6px}.touchbtn{padding:10px 12px}#touch{display:flex}#powerupHud{bottom:74px;left:6px;font-size:10px}}
 </style>
 </head>
@@ -32,17 +33,18 @@ button{border:0;border-radius:9px;background:linear-gradient(90deg,#45eaf4,#6aff
 <div id="hud">
  <div class="hudbox"><span class="cyan">BÖLÜM 2</span> · <span id="stageName">Yüzey Çıkışı</span><br><span id="lives">❤️❤️❤️❤️❤️</span></div>
  <div class="hudbox"><span class="gold">ZED COIN</span> <span id="coins">0</span> · SKOR <span id="score">0</span><br><span class="cyan">BÖLGE</span> <span id="zone">1/5</span></div>
- <div class="hudbox">TANK <span id="tankState">YOK</span><br>⚔ <span id="armor">5</span></div>
+ <div class="hudbox">ROBO MECH <span id="tankState">HAZIR</span><br>🚀 <span id="flightFuel">5.0</span>s · ZIRH <span id="armor">5</span></div>
 </div>
 <div id="powerupHud">🛡️ <span id="shieldStock">0</span> · 🧲 <span id="magnetStatus">PASİF</span></div>
 <div id="message"></div>
 <div id="intro" class="overlay">
  <div class="panel">
   <h1>ZED'S REVENGE</h1><h2>BÖLÜM 2: TANK KAÇKINI</h2>
-  <p class="story">3101 yılında Zed sonunda yeryüzüne çıkar. Fakat özgürlük yerine projektörler, sirenler ve etrafını saran askerlerle karşılaşır. Tam yakalanacakken motor havuzundaki bir tankı gözüne kestirir.<br><br><strong>Plan basit:</strong> Tankı ele geçir, robotları ve askerleri aş, ZED coin'leri topla ve beş bölgeden geçerek komuta merkezine ulaş.</p>
-  <div class="controls">YATAY RETRO AKSİYON · 5 BÖLGE · Yaklaşık 10–15 dakikalık macera<br>← → / A D: hareket · ↑ / W / SPACE: zıpla · Z: saldır / ateş · Fare veya Q/E: taret nişanı · S: kalkan</div>
+  <p class="story">3101 yılında Zed yeryüzüne çıkar. Neon ışıklı şehrin ortasında terk edilmiş roketli bir Robo Mech bulur ve onu ele geçirir. Birkaç sokak ileride Nexa birlikleri mevzilenmiştir.<br><br><strong>Görev:</strong> Robo Mech ile uç, robot askerleri ve zırhlı birlikleri alt et, ZED coin'leri topla ve beş bölgeyi geçerek komuta merkezine ulaş.</p>
+  <div class="controls">ROKETLİ AKSİYON · 5 BÖLGE · Yaklaşık 10–15 dakikalık macera<br>← → / A D: hareket · SPACE basılı tut: uç (5 sn, yerde dolar) · Z: ateş · Fare veya Q/E: silah nişanı · S: kalkan</div>
+  <div class="shop-heading">ROBO MECH ÖNCESİ TEDARİK</div><div class="shop-grid"><div class="shop-card">❤️ EKSTRA CAN<button type="button" data-buy="lives">+10 AL</button></div><div class="shop-card">🛡️ KALKAN<button type="button" data-buy="shields">+10 AL</button></div><div class="shop-card">🧲 MIKNATIS<button type="button" data-buy="magnets">+10 AL</button></div></div><div class="shop-note">Deneme paketi · her basışta envantere 10 adet eklenir.</div>
   <div class="inventory-line"><span id="inventorySummary">Envanter yükleniyor…</span><br>Bu bölümde kullanılacak mıknatıs: <input id="magnetUseCount" type="number" min="0" value="0" inputmode="numeric"></div>
-  <button id="start">YÜZEYE ÇIK</button>
+  <button id="start">ROBO MECH'E BİN</button>
  </div>
 </div>
 <div id="end" class="overlay hidden">
@@ -58,7 +60,7 @@ button{border:0;border-radius:9px;background:linear-gradient(90deg,#45eaf4,#6aff
 (function(){
 'use strict';
 const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
-const W=960,H=540,GROUND=450,ZONE_LENGTH=18000,TOTAL_ZONES=5;
+const W=960,H=540,GROUND=450,ZONE_LENGTH=18000,TOTAL_ZONES=5,FLIGHT_CAP=5;
 const stages=[
  {name:'Yüzey Çıkışı',sky:'#7b9dad',far:'#627a79',ground:'#344c3d',accent:'#f0b64c'},
  {name:'Zırhlı Motor Havuzu',sky:'#687989',far:'#465667',ground:'#303b48',accent:'#e59248'},
@@ -78,7 +80,7 @@ const coinTypes=[
 const keys={left:false,right:false,jump:false,attack:false};
 let state='intro',zone=0,worldX=0,cameraX=0,score=0,coinCount=0,lives=5,invulnerable=0;
 let player,enemies=[],coins=[],bullets=[],enemyBullets=[],platforms=[],pits=[],particles=[];
-let tankFound=false,tankArmor=5,attackCooldown=0,messageTimer=0,lastTime=0,tankCooldown=0;
+let tankFound=false,tankArmor=5,flightFuel=FLIGHT_CAP,attackCooldown=0,messageTimer=0,lastTime=0,tankCooldown=0;
 let tankAimAngle=0,tankAimDirection=1,mouseAim=false,shieldActive=false,shieldTimer=0,magnetActive=false,magnetTimer=0,magnetChargesRemaining=0;
 let runUsage={shields:0,magnets:0},shopInventory={lives:0,shields:0,magnets:0},purchasedLivesAtStart=0;
 let lastCoinLabel='ZED';
@@ -100,38 +102,29 @@ function resetGame(){
  zone=0;worldX=0;cameraX=0;score=0;coinCount=0;invulnerable=0;
  loadInventory();purchasedLivesAtStart=shopInventory.lives;lives=5+purchasedLivesAtStart;
  runUsage={shields:0,magnets:0};shieldActive=false;shieldTimer=0;
- tankFound=false;tankArmor=5;attackCooldown=0;tankCooldown=0;tankAimAngle=0;tankAimDirection=1;mouseAim=false;lastCoinLabel='ZED';
+ tankFound=true;tankArmor=5;flightFuel=FLIGHT_CAP;attackCooldown=0;tankCooldown=0;tankAimAngle=0;tankAimDirection=1;mouseAim=false;lastCoinLabel='ZED';
  const requested=Math.max(0,parseInt(document.getElementById('magnetUseCount').value,10)||0);
  magnetChargesRemaining=Math.min(requested,shopInventory.magnets);magnetActive=magnetChargesRemaining>0;
  let stored=0;try{stored=Math.max(0,Number(localStorage.getItem(MAGNET_TIME_KEY))||0);}catch(_){}
  magnetTimer=magnetActive?(stored>0?Math.min(MAGNET_DURATION,stored):MAGNET_DURATION):0;
  refreshPowerupPanel();initZone();state='playing';lastTime=0;
- showMessage('Zed projektörlerin altında yüzeye çıktı! Motor havuzuna ulaş.',3200);
-}
-function initZone(){
+ showMessage('Roketli Robo Mech hazır! Düşman birlikleri ileride mevzilenmiş.',3000);
+}function initZone(){
  worldX=0;cameraX=0;bullets=[];enemyBullets=[];particles=[];
- player={x:120,y:GROUND-52,w:42,h:52,vy:0,grounded:true,face:1,attack:0};
+ player={x:120,y:GROUND-68,w:80,h:68,vy:0,grounded:true,face:1,attack:0};
  enemies=[];coins=[];platforms=[];pits=[];
  for(let x=900;x<ZONE_LENGTH-1100;x+=1150){
-   // This chapter uses continuous ground; pits were removed for fair jumps.
    platforms.push({x:x+120,w:130+(x%2)*50,y:GROUND-55-(x%3)*22});
-   enemies.push({x:x+420,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:Math.random()>.52?'robot':'soldier',dir:-1,alive:true,cool:.7+Math.random()});
-   if(x%3===0) enemies.push({x:x+760,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:1,alive:true,cool:1+Math.random()});
+   enemies.push({x:x+520,y:GROUND-42,w:43,h:48,hp:2,maxHp:2,type:Math.random()>.52?'robot':'soldier',dir:-1,alive:true,cool:.7+Math.random()});
+   if(x%3===0) enemies.push({x:x+850,y:GROUND-42,w:43,h:48,hp:2,maxHp:2,type:'robot',dir:1,alive:true,cool:1+Math.random()});
    if(zone>0&&Math.floor((x-900)/1150)%4===1)enemies.push({x:x+900,y:GROUND-58,w:120,h:58,hp:7,maxHp:7,type:'enemyTank',dir:-1,alive:true,cool:1.2+Math.random()});
- }
- if(zone===0){
-   // Keep the first patrol outside aggro range so players have time to react at spawn.
-   enemies.push({x:620,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:1,alive:true,cool:2.2});
-   enemies.push({x:930,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:-1,alive:true,cool:2.8});
-   enemies.push({x:1230,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:-1,alive:true,cool:3.3});
  }
  for(let x=550;x<ZONE_LENGTH-500;x+=470){
    const type=coinTypes[Math.floor(Math.random()*coinTypes.length)];
    coins.push({x:x+Math.random()*150,y:GROUND-90-Math.random()*150,r:13,type,alive:true});
  }
  enemies.push({x:ZONE_LENGTH-720,y:GROUND-72,w:72,h:72,hp:8,maxHp:8,type:'commander',dir:-1,alive:true,cool:0,boss:true});
-}
-function showMessage(text,ms){
+}function showMessage(text,ms){
  const node=document.getElementById('message');node.textContent=text;node.classList.add('show');messageTimer=ms;
 }
 function pressAction(action){
@@ -164,8 +157,11 @@ function setTankAimFromPointer(ev){
  const r=canvas.getBoundingClientRect(),mx=(ev.clientX-r.left)*W/r.width-player.x-28,my=(ev.clientY-r.top)*H/r.height-(player.y+25);
  tankAimDirection=mx<0?-1:1;tankAimAngle=Math.max(-.72,Math.min(.72,Math.atan2(my,Math.abs(mx))));mouseAim=true;
 }
-function damageEnemy(e,amount){e.hp-=amount;particles.push({x:e.x,y:e.y+10,life:.4,color:'#ffd86b'});if(e.hp<=0){e.alive=false;score+=e.boss?250:25;}}
-function damagePlayer(){
+function damageEnemy(e,amount){
+ if(!e.alive)return;
+ e.hp-=amount;particles.push({x:e.x,y:e.y+10,life:.4,color:'#ffd86b'});
+ if(e.hp<=0){e.alive=false;const earned=e.boss?250:50;score+=earned;showMessage((e.boss?'KOMUTAN İMHA':'DÜŞMAN İMHA')+'  +'+earned+' PUAN',1050);}
+}function damagePlayer(){
  if(shieldActive&&shieldTimer>0){showMessage('Kalkan darbeyi karşıladı!',700);return;}
  if(invulnerable>0)return;
  if(tankFound&&tankArmor>0){tankArmor--;showMessage('Tank zırhı darbe aldı! Zırh: '+tankArmor,1000);if(tankArmor===0){tankFound=false;showMessage('Tank devre dışı! Yaya devam et.',1800);}}
@@ -175,35 +171,31 @@ function damagePlayer(){
 }
 function inPit(x){return pits.some(p=>x>p.x&&x<p.x+p.w);}
 function movePlayer(dt){
- const prevY=player.y,prevBottom=player.y+player.h;
+ const prevBottom=player.y+player.h;
  let direction=(keys.right?1:0)-(keys.left?1:0);
  const speed=tankFound?2.65:3.15;
  if(direction){
-  player.face=direction;
-  player.x+=direction*speed*dt*60;
+  player.face=direction;player.x+=direction*speed*dt*60;
   if(player.x>W*.55){worldX+=player.x-W*.55;player.x=W*.55;}
-  if(player.x<W*.2&&worldX>0){
-   const shift=Math.min(W*.2-player.x,worldX);
-   worldX-=shift;player.x+=shift;
-  }
+  if(player.x<W*.2&&worldX>0){const shift=Math.min(W*.2-player.x,worldX);worldX-=shift;player.x+=shift;}
  }
- player.x=Math.max(50,Math.min(W*.58,player.x));
- worldX=Math.max(0,Math.min(ZONE_LENGTH,worldX));
- if(keys.jump&&player.grounded)pressAction('jump');
- player.vy+=.52*dt*60;player.y+=player.vy*dt*60;player.grounded=false;
- for(const p of platforms){
-   const sx=p.x-worldX;
-   if(sx+ p.w>player.x&&sx<player.x+player.w&&prevBottom<=p.y&&player.y+player.h>=p.y&&player.vy>=0){
-    player.y=p.y-player.h;player.vy=0;player.grounded=true;
-   }
+ player.x=Math.max(50,Math.min(W*.58,player.x));worldX=Math.max(0,Math.min(ZONE_LENGTH,worldX));
+ const boosting=tankFound&&keys.jump&&flightFuel>0;
+ if(boosting){flightFuel=Math.max(0,flightFuel-dt);player.vy=-1.15;player.grounded=false;}
+ else{
+  if(!tankFound&&keys.jump&&player.grounded)pressAction('jump');
+  if(player.grounded)flightFuel=Math.min(FLIGHT_CAP,flightFuel+dt*.7);
+  player.vy+=.52*dt*60;
  }
+ player.y+=player.vy*dt*60;player.grounded=false;
+ for(const p of platforms){const sx=p.x-worldX;if(sx+p.w>player.x&&sx<player.x+player.w&&prevBottom<=p.y&&player.y+player.h>=p.y&&player.vy>=0){player.y=p.y-player.h;player.vy=0;player.grounded=true;}}
  if(player.y+player.h>=GROUND&&!inPit(worldX+player.x)){player.y=GROUND-player.h;player.vy=0;player.grounded=true;}
+ if(player.y<82){player.y=82;player.vy=0;}
  if(player.y>H+45){damagePlayer();player.y=GROUND-player.h;player.vy=0;worldX=Math.max(0,worldX-150);}
  const activeBoss=enemies.find(e=>e.boss&&e.alive);
  if(activeBoss&&worldX+player.x>activeBoss.x-50)worldX=Math.max(0,activeBoss.x-player.x-50);
  if(worldX>=ZONE_LENGTH-350&&!enemies.some(e=>e.boss&&e.alive)){nextZone();}
-}
-function update(dt){
+}function update(dt){
  movePlayer(dt);attackCooldown=Math.max(0,attackCooldown-dt);tankCooldown=Math.max(0,tankCooldown-dt);if(player.attack>0)player.attack-=dt;
  if(invulnerable>0)invulnerable-=dt;
  if(shieldActive){shieldTimer-=dt;if(shieldTimer<=0){shieldActive=false;shieldTimer=0;showMessage('Kalkan süresi doldu.',900);}}
@@ -250,7 +242,7 @@ function update(dt){
   if(c.alive&&Math.abs(c.x-playerWorld)<32&&Math.abs(c.y-(player.y+player.h*.5))<38){c.alive=false;coinCount++;score+=c.type.value;lastCoinLabel=c.type.name;showMessage('+'+c.type.value+' '+c.type.name+' COIN',650);}
  });
  coins=coins.filter(c=>c.alive);
- if(!tankFound&&zone===0&&worldX+player.x>1350){tankFound=true;tankArmor=5;tankAimAngle=0;tankAimDirection=1;mouseAim=false;showMessage('TANKI ELE GEÇİRDİN! Fare/Q-E ile nişan al, Z ile ateş et.',2800);}
+ 
  if(messageTimer>0){messageTimer-=dt*1000;if(messageTimer<=0)document.getElementById('message').classList.remove('show');}
  updateHud();
 }
@@ -288,7 +280,8 @@ function updateHud(){
  document.getElementById('coins').textContent=coinCount+' ('+lastCoinLabel+')';
  document.getElementById('score').textContent=score;
  document.getElementById('zone').textContent=(zone+1)+'/'+TOTAL_ZONES;
- document.getElementById('tankState').textContent=tankFound?'ALINDI':'YOK';
+ document.getElementById('tankState').textContent=tankFound?'AKTİF':'YOK';
+ document.getElementById('flightFuel').textContent=flightFuel.toFixed(1);
  document.getElementById('armor').textContent=tankArmor;
  document.getElementById('shieldStock').textContent=Math.max(0,shopInventory.shields-runUsage.shields);
  document.getElementById('magnetStatus').textContent=magnetActive?Math.ceil(magnetTimer/1000)+'s · '+magnetChargesRemaining:'PASİF';
@@ -329,33 +322,34 @@ function drawBackground(){
 }
 function drawCoin(c){const x=c.x-worldX;ctx.save();ctx.fillStyle=c.type.color;ctx.shadowBlur=14;ctx.shadowColor=c.type.color;ctx.beginPath();ctx.arc(x,c.y,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#111';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.type.symbol,x,c.y);ctx.restore();}
 function drawTankModel(x,y,angle,hostile=false,direction=1){
- const hull=hostile?'#491f36':'#455d4b',armor=hostile?'#982f55':'#6d9c65',edge=hostile?'#ff477d':'#45e9dd',dark='#111722',metal='#323d4c';
+ const edge=hostile?'#ff397b':'#31edff',plate=hostile?'#812044':'#34465a',armor=hostile?'#bd315d':'#71899a',dark='#09111e',metal='#263447';
+ const flying=!hostile&&tankFound&&keys.jump&&flightFuel>0,thrust=.72+.28*Math.sin(performance.now()/38);
  ctx.save();ctx.translate(x,y);if(direction<0){ctx.translate(120,0);ctx.scale(-1,1);}
- // Broad powered treads with steel wheels and illuminated suspension.
- ctx.fillStyle='#030710bb';ctx.beginPath();ctx.ellipse(60,61,72,8,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle='#151c29';ctx.strokeStyle='#717d8c';ctx.lineWidth=2.5;ctx.beginPath();ctx.roundRect(0,34,120,28,14);ctx.fill();ctx.stroke();
- for(let i=0;i<9;i++){const wx=10+i*12.5;ctx.fillStyle=i%2?'#475363':'#313d4c';ctx.beginPath();ctx.arc(wx,48,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a5b7bf';ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=edge;ctx.shadowBlur=6;ctx.shadowColor=edge;ctx.beginPath();ctx.arc(wx,48,2.2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
- // Angular sloped glacis and layered reactive armor.
- ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(8,37);ctx.lineTo(19,16);ctx.lineTo(101,14);ctx.lineTo(117,31);ctx.lineTo(111,45);ctx.lineTo(11,46);ctx.closePath();ctx.fill();
- const plate=ctx.createLinearGradient(15,15,98,44);plate.addColorStop(0,armor);plate.addColorStop(.48,hull);plate.addColorStop(1,'#273343');
- ctx.fillStyle=plate;ctx.strokeStyle=hostile?'#d93b67':'#a8df8c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(11,33);ctx.lineTo(23,13);ctx.lineTo(99,12);ctx.lineTo(114,30);ctx.lineTo(108,40);ctx.lineTo(15,41);ctx.closePath();ctx.fill();ctx.stroke();
- ctx.fillStyle=hostile?'#6d2946':'#577b57';ctx.beginPath();ctx.moveTo(24,16);ctx.lineTo(37,7);ctx.lineTo(86,7);ctx.lineTo(99,17);ctx.lineTo(91,25);ctx.lineTo(32,25);ctx.closePath();ctx.fill();
- for(let i=0;i<4;i++){const px=25+i*19;ctx.fillStyle=hostile?'#a32f5a':'#7ca967';ctx.beginPath();ctx.moveTo(px,20);ctx.lineTo(px+10,18);ctx.lineTo(px+11,28);ctx.lineTo(px+1,30);ctx.closePath();ctx.fill();ctx.strokeStyle=hostile?'#ff678d':'#b5ee9c';ctx.lineWidth=1;ctx.stroke();}
- // Turret with rotating shielded barrel and energized muzzle.
- ctx.save();ctx.translate(61,14);ctx.rotate(direction<0?-angle:angle);
- ctx.fillStyle='#0a1019';ctx.beginPath();ctx.roundRect(-23,-9,48,24,9);ctx.fill();
- ctx.fillStyle=metal;ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,2);ctx.lineTo(-14,-12);ctx.lineTo(9,-14);ctx.lineTo(25,-4);ctx.lineTo(21,8);ctx.lineTo(-15,10);ctx.closePath();ctx.fill();ctx.stroke();
- ctx.fillStyle=armor;ctx.beginPath();ctx.moveTo(-9,-11);ctx.lineTo(8,-12);ctx.lineTo(17,-4);ctx.lineTo(2,-1);ctx.lineTo(-13,-3);ctx.closePath();ctx.fill();
- ctx.fillStyle=dark;ctx.beginPath();ctx.roundRect(10,-7,58,9,3);ctx.fill();ctx.fillStyle=hostile?'#ca3f66':'#93b987';ctx.fillRect(19,-6,40,4);
- ctx.fillStyle=metal;ctx.fillRect(57,-9,13,13);ctx.fillStyle=edge;ctx.shadowBlur=13;ctx.shadowColor=edge;ctx.fillRect(68,-7,5,8);ctx.shadowBlur=0;
+ // Rocket pack and twin vector thrusters on the mech's back.
+ ctx.fillStyle='#111a29';ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(5,11,29,30,7);ctx.fill();ctx.stroke();
+ for(let i=0;i<2;i++){const rx=10+i*14;ctx.fillStyle=metal;ctx.beginPath();ctx.roundRect(rx,3,9,25,4);ctx.fill();ctx.strokeStyle='#8999ad';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=edge;ctx.shadowBlur=9;ctx.shadowColor=edge;ctx.fillRect(rx+2,7,5,3);ctx.shadowBlur=0;
+  ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(rx+1,28);ctx.lineTo(rx+8,28);ctx.lineTo(rx+7,35);ctx.lineTo(rx+2,35);ctx.closePath();ctx.fill();
+  if(flying){const fh=16+Math.random()*12,flame=ctx.createLinearGradient(0,29,0,29+fh);flame.addColorStop(0,'#eaffff');flame.addColorStop(.25,edge);flame.addColorStop(1,'#ff8436');ctx.fillStyle=flame;ctx.shadowBlur=16;ctx.shadowColor=edge;ctx.beginPath();ctx.moveTo(rx+2,34);ctx.lineTo(rx+7,34);ctx.lineTo(rx+5,34+fh*thrust);ctx.closePath();ctx.fill();ctx.shadowBlur=0;}
+ }
+ // Heavy crawler track with illuminated steel wheels.
+ ctx.fillStyle='#030710bb';ctx.beginPath();ctx.ellipse(60,63,70,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#101a27';ctx.strokeStyle='#75869a';ctx.lineWidth=2.3;ctx.beginPath();ctx.roundRect(4,37,112,25,12);ctx.fill();ctx.stroke();
+ for(let i=0;i<8;i++){const wx=12+i*13.6;ctx.fillStyle=i%2?'#506174':'#303e51';ctx.beginPath();ctx.arc(wx,49,7.5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#b4c5d5';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=edge;ctx.shadowBlur=7;ctx.shadowColor=edge;ctx.beginPath();ctx.arc(wx,49,2.2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+ // Armored robot torso and reactive shoulder plating.
+ ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(23,40);ctx.lineTo(25,21);ctx.lineTo(42,14);ctx.lineTo(79,15);ctx.lineTo(99,26);ctx.lineTo(97,44);ctx.lineTo(82,53);ctx.lineTo(37,52);ctx.closePath();ctx.fill();
+ const grad=ctx.createLinearGradient(25,15,96,48);grad.addColorStop(0,armor);grad.addColorStop(.5,plate);grad.addColorStop(1,'#182536');ctx.fillStyle=grad;ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(26,35);ctx.lineTo(31,20);ctx.lineTo(45,14);ctx.lineTo(77,15);ctx.lineTo(94,25);ctx.lineTo(92,41);ctx.lineTo(79,49);ctx.lineTo(39,48);ctx.closePath();ctx.fill();ctx.stroke();
+ // Helmet and illuminated visor.
+ ctx.fillStyle=metal;ctx.strokeStyle=hostile?'#ff6590':'#b3f8ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(46,17);ctx.lineTo(49,5);ctx.lineTo(58,0);ctx.lineTo(74,1);ctx.lineTo(83,9);ctx.lineTo(81,21);ctx.lineTo(74,27);ctx.lineTo(52,25);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle=hostile?'#ff376d':'#28edff';ctx.shadowBlur=13;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.moveTo(50,10);ctx.lineTo(78,10);ctx.lineTo(76,17);ctx.lineTo(52,17);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+ // Reactor core and chest insignia.
+ ctx.fillStyle=hostile?'#ff3d70':'#ffcc58';ctx.shadowBlur=14;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.arc(61,34,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#ecf9ff';ctx.beginPath();ctx.arc(61,34,2.5,0,Math.PI*2);ctx.fill();
+ for(let i=0;i<3;i++){ctx.fillStyle=i%2?edge:'#172539';ctx.beginPath();ctx.moveTo(36+i*15,42);ctx.lineTo(47+i*15,40);ctx.lineTo(46+i*15,45);ctx.lineTo(35+i*15,46);ctx.closePath();ctx.fill();}
+ // Arm cannon rotates with the aim angle.
+ ctx.save();ctx.translate(87,28);ctx.rotate(direction<0?-angle:angle);ctx.fillStyle=metal;ctx.strokeStyle=edge;ctx.lineWidth=1.4;ctx.beginPath();ctx.roundRect(-3,-2,25,12,4);ctx.fill();ctx.stroke();ctx.fillStyle=dark;ctx.beginPath();ctx.roundRect(15,0,26,7,3);ctx.fill();ctx.fillStyle=hostile?'#ff4a74':'#ffbf55';ctx.fillRect(32,1,7,4);ctx.restore();
+ ctx.fillStyle=hostile?'#a62851':'#3a91a5';ctx.beginPath();ctx.moveTo(27,18);ctx.lineTo(17,10);ctx.lineTo(20,25);ctx.lineTo(31,29);ctx.closePath();ctx.fill();ctx.fillStyle=hostile?'#f44074':'#6df2ff';ctx.fillRect(35,53,40,2);
+ ctx.fillStyle='#f3f8ff';ctx.font='bold 7px Arial';ctx.textAlign='center';ctx.fillText(hostile?'NEXA / R-09':'ZED / ROBO-MK1',62,59);
  ctx.restore();
- // Sensor mast, rear fuel cylinders, headlights, stencil.
- ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(100,13);ctx.lineTo(108,2);ctx.lineTo(114,2);ctx.stroke();ctx.fillStyle=edge;ctx.shadowBlur=9;ctx.shadowColor=edge;ctx.beginPath();ctx.arc(114,2,3,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
- ctx.fillStyle=hostile?'#ff426d':'#25e9ee';ctx.shadowBlur=10;ctx.shadowColor=ctx.fillStyle;ctx.fillRect(14,28,12,4);ctx.fillRect(95,28,12,4);ctx.shadowBlur=0;
- ctx.fillStyle='#080d15';ctx.font='bold 8px Arial';ctx.textAlign='center';ctx.fillText(hostile?'HUNTER 09':'ZED / XR-7',60,57);
- ctx.restore();
-}
-function drawEnemy(e){
+}function drawEnemy(e){
  const x=e.x-worldX,y=e.y;
  if(e.type==='enemyTank'){
   const dx=worldX+player.x+player.w*.5-(e.x+e.w*.5),dy=player.y+player.h*.5-(e.y+18),dir=dx<0?-1:1;
@@ -414,23 +408,18 @@ function drawParkedTank(){
  drawTankModel(x,y,0,false);ctx.save();ctx.fillStyle='#fff2a8';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText('TANKI ELE GEÇİR',x+48,y-7);ctx.restore();
 }
 function drawPlayer(){
- const x=player.x+player.w/2,y=player.y+player.h-45,now=performance.now();
+ const x=player.x+player.w/2,y=player.y+player.h-48,now=performance.now();
  ctx.save();if(player.face<0){ctx.translate(x*2,0);ctx.scale(-1,1);}
  if(invulnerable>0&&Math.floor(invulnerable*12)%2)ctx.globalAlpha=.45;
- if(tankFound)drawTankModel(player.x-27,player.y-5,tankAimAngle,false,tankAimDirection);
- else{
-  // Reuse the exact full-body manga Zed artwork from chapter one.
-  window.ctx=ctx;window.shieldActive=shieldActive;
-  if(window.drawZed)window.drawZed(x,y,Math.sin(now/230)*.12,1,now);
- }
- if(shieldActive&&shieldTimer>0){ctx.strokeStyle='#74f6ff';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#41e9ff';ctx.beginPath();ctx.ellipse(player.x+20,player.y+25,48,42,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
+ if(tankFound)drawTankModel(player.x-20,player.y+2,tankAimAngle,false,tankAimDirection);
+ else{window.ctx=ctx;window.shieldActive=shieldActive;if(window.drawZed)window.drawZed(x,y,Math.sin(now/230)*.12,1,now);}
+ if(shieldActive&&shieldTimer>0){ctx.strokeStyle='#74f6ff';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#41e9ff';ctx.beginPath();ctx.ellipse(player.x+player.w/2,player.y+player.h/2,58,48,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
  ctx.restore();
-}
-function draw(){
+}function draw(){
  drawBackground();
  pits.forEach(p=>{const x=p.x-worldX;if(x<W&&x+p.w>0){ctx.fillStyle='#080b13';ctx.fillRect(x,GROUND,p.w,H-GROUND);ctx.fillStyle='#ffb53d';ctx.fillRect(x,GROUND,p.w,5);}});
  platforms.forEach(p=>{const x=p.x-worldX;if(x<W&&x+p.w>0){ctx.fillStyle='#5b6675';ctx.fillRect(x,p.y,p.w,13);ctx.fillStyle='#a9b9c7';ctx.fillRect(x,p.y,p.w,3);}});
- drawParkedTank();coins.forEach(c=>drawCoin(c));enemies.forEach(e=>{if(e.alive)drawEnemy(e);});
+ if(!tankFound)drawParkedTank();coins.forEach(c=>drawCoin(c));enemies.forEach(e=>{if(e.alive)drawEnemy(e);});
  bullets.forEach(b=>{const x=b.x-worldX;ctx.save();ctx.translate(x,b.y);ctx.rotate(Math.atan2(b.vy||0,b.vx));ctx.fillStyle=b.tank?'#ffd767':'#ffdc65';ctx.shadowBlur=b.tank?14:7;ctx.shadowColor=b.tank?'#ffad42':'#ffdc65';ctx.beginPath();ctx.roundRect(-2,-3,b.tank?20:13,6,3);ctx.fill();ctx.restore();});
  enemyBullets.forEach(b=>{const x=b.x-worldX;ctx.save();ctx.translate(x,b.y);ctx.rotate(Math.atan2(b.vy,b.vx));ctx.fillStyle=b.heavy?'#ff685c':'#ffb15c';ctx.shadowBlur=11;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.ellipse(0,0,b.heavy?8:6,3,0,0,Math.PI*2);ctx.fill();ctx.restore();});
  if(magnetActive){ctx.save();ctx.strokeStyle='#ff83f3aa';ctx.lineWidth=2;ctx.setLineDash([8,7]);ctx.shadowBlur=14;ctx.shadowColor='#ff56ed';ctx.beginPath();ctx.ellipse(player.x+player.w/2,player.y+player.h/2,105+Math.sin(performance.now()/130)*5,65+Math.cos(performance.now()/150)*4,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
@@ -466,6 +455,12 @@ document.querySelectorAll('.touchbtn').forEach(b=>{
 });
 refreshPowerupPanel();
 document.getElementById('start').addEventListener('click',()=>{document.getElementById('intro').classList.add('hidden');resetGame();});
+document.querySelectorAll('[data-buy]').forEach(button=>button.addEventListener('click',()=>{
+ const item=button.dataset.buy;loadInventory();shopInventory[item]=(Number(shopInventory[item])||0)+10;
+ try{localStorage.setItem(SHOP_KEY,JSON.stringify(shopInventory));}catch(_){}
+ if(item==='magnets'){const input=document.getElementById('magnetUseCount'),old=Math.max(0,parseInt(input.value,10)||0);input.max=shopInventory.magnets;input.value=old===0?10:Math.min(shopInventory.magnets,old);}
+ refreshPowerupPanel();button.textContent='+10 EKLENDİ ✓';setTimeout(()=>{button.textContent='+10 AL';},900);
+}));
 document.getElementById('again').addEventListener('click',()=>{document.getElementById('end').classList.add('hidden');resetGame();});
 document.getElementById('hub').addEventListener('click',()=>window.location.href='index.html');
 requestAnimationFrame(frame);
