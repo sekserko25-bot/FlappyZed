@@ -148,7 +148,8 @@ function movePlayer(dt){
  }
  if(player.y+player.h>=GROUND&&!inPit(worldX+player.x)){player.y=GROUND-player.h;player.vy=0;player.grounded=true;}
  if(player.y>H+45){damagePlayer();player.y=GROUND-player.h;player.vy=0;worldX=Math.max(0,worldX-150);}
- if(worldX>ZONE_LENGTH-1368&&enemies.some(e=>e.boss&&e.alive)){worldX=ZONE_LENGTH-1368;player.x=Math.min(player.x,W*.55);}
+ const activeBoss=enemies.find(e=>e.boss&&e.alive);
+ if(activeBoss&&worldX+player.x>activeBoss.x-50)worldX=Math.max(0,activeBoss.x-player.x-50);
  if(worldX>=ZONE_LENGTH-350&&!enemies.some(e=>e.boss&&e.alive)){nextZone();}
 }
 function update(dt){
