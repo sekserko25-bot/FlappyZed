@@ -90,9 +90,10 @@ function initZone(){
    if(x%3===0) enemies.push({x:x+760,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:1,alive:true,cool:0});
  }
  if(zone===0){
-   enemies.push({x:310,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:1,alive:true,cool:0});
-   enemies.push({x:560,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:-1,alive:true,cool:0});
-   enemies.push({x:810,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:-1,alive:true,cool:0});
+   // Keep the first patrol outside aggro range so players have time to react at spawn.
+   enemies.push({x:620,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:1,alive:true,cool:0});
+   enemies.push({x:930,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'soldier',dir:-1,alive:true,cool:0});
+   enemies.push({x:1230,y:GROUND-42,w:38,h:42,hp:1,maxHp:1,type:'robot',dir:-1,alive:true,cool:0});
  }
  for(let x=550;x<ZONE_LENGTH-500;x+=470){
    const type=coinTypes[Math.floor(Math.random()*coinTypes.length)];
