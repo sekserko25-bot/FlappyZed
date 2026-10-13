@@ -1,6 +1,6 @@
 const GAMES = [
     { id: 1, name: "Escape from Depth 7", icon: "🚀", url: "game1.html" },
-    { id: 2, name: "Stick War", icon: "🏏", url: "#" },
+    { id: 2, name: "Tank Breakout", icon: "🪖", url: "chapter2.html" },
     { id: 3, name: "Boss: Krump", icon: "👑", url: "#" },
     { id: 4, name: "Tower of Zorak Creed", icon: "🏢", url: "#" },
     { id: 5, name: "Liquidity Escape", icon: "🌊", url: "#" },
